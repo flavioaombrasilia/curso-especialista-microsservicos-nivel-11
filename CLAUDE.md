@@ -1,22 +1,22 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Este arquivo orienta o Claude Code (claude.ai/code) ao trabalhar com o código deste repositório.
 
-## Overview
+## Visão geral
 
-Course repository for **"Microsserviços em Produção na AWS — Nível 11"** (Algaworks). The practical project is **AlgaDelivery**, a microservices platform deployed on AWS. Each numbered directory (e.g. `03.07-trabalhando-com-variaveis/`) is a self-contained snapshot for a specific lesson, incrementally building on the previous one. All infrastructure is written in **OpenTofu** (`.tofu` files).
+Repositório do curso **"Microsserviços em Produção na AWS — Nível 11"** (Algaworks). O projeto prático é o **AlgaDelivery**, uma plataforma de microsserviços implantada na AWS. Cada diretório numerado (ex.: `03.07-trabalhando-com-variaveis/`) é um snapshot autocontido de uma aula específica, construído incrementalmente sobre o anterior. Toda a infraestrutura é escrita em **OpenTofu** (arquivos `.tofu`).
 
-The full course outline lives in `EMENTA-NIVEL-11-AWS.md` — treat that as the source of truth for module/lesson structure.
+A ementa completa do curso está em `EMENTA-NIVEL-11-AWS.md` — trate-a como a fonte da verdade para a estrutura de módulos/aulas.
 
-## Course Structure (13 modules)
+## Estrutura do curso (13 módulos)
 
-| # | Module | Status | Aulas |
+| # | Módulo | Status | Aulas |
 |---|---|---|---|
-| 1 | Fundamentos de Cloud Computing | 🎥 em gravação | 13 |
+| 1 | Fundamentos de Cloud Computing | ✅ finalizado | 13 |
 | 2 | Fundamentos de Redes na AWS | ✅ finalizado | 19 |
 | 3 | Infraestrutura como Código (IaC) na AWS | ✅ finalizado | 21 |
 | 4 | IaC Modular e Serviços Gerenciados na AWS | ✅ finalizado | 21 |
-| 5 | Kubernetes: Fundamentos e Workloads | 📋 ementa planejada | 17 |
+| 5 | Kubernetes: Fundamentos e Workloads | 🎥 em gravação | 17 |
 | 6 | Kubernetes: Rede, Escala e Segurança | 📋 ementa planejada | 17 |
 | 7 | Provisionando o cluster EKS na AWS com OpenTofu | 📋 ementa planejada | 14 |
 | 8 | Ferramentas de Deploy e GitOps | 📋 ementa planejada | 16 |
@@ -24,243 +24,244 @@ The full course outline lives in `EMENTA-NIVEL-11-AWS.md` — treat that as the 
 | 10 | Deploy do Backend do AlgaDelivery na AWS | 📋 ementa planejada | 6 |
 | 11 | Deploy do Frontend do AlgaDelivery (S3 + CloudFront) | 📋 ementa planejada | 6 |
 | 12 | Observabilidade em Produção: Prometheus, Grafana e Elastic APM | 📋 ementa planejada | 19 |
-| 13 | Apêndice — Deploy Algashop | 📋 ementa planejada | — |
+| 13 | Apêndice — Deploy Algashop | 🔜 a planejar | — |
 
-**Narrative arc:** Cloud foundations → AWS networking → IaC fundamentals → Modular IaC + managed services → Kubernetes fundamentals + workloads (local with Kind) → Kubernetes networking, scaling, scheduling & security → **Provision EKS** (ALB Ingress + ACM) → Deploy tooling (Helm/ArgoCD) → External config → Deploy AlgaDelivery backend on real infra → Deploy AlgaDelivery frontend (S3 + CloudFront) → Observe it in production (Prometheus/Grafana + Elastic APM) → Appendix.
+**Arco narrativo:** Fundamentos de cloud → Redes na AWS → Fundamentos de IaC → IaC modular + serviços gerenciados → Kubernetes fundamentos + workloads (local com Kind) → Kubernetes rede, escala, scheduling e segurança → **Provisionar EKS** (ALB Ingress + ACM) → Ferramentas de deploy (Helm/ArgoCD) → Configuração externalizada → Deploy do backend do AlgaDelivery em infra real → Deploy do frontend do AlgaDelivery (S3 + CloudFront) → Observá-lo em produção (Prometheus/Grafana + Elastic APM) → Apêndice.
 
-## Pedagogical Principles
+## Princípios pedagógicos
 
-These principles emerged from the course design and should guide content/code suggestions:
+Estes princípios emergiram do design do curso e devem guiar sugestões de conteúdo/código:
 
-1. **Conceito → Implementação** — abstract concepts are taught immediately before their concrete implementation, not separately:
-   - Module 5 opens with VMs/Containers/CNCF/Service Instance Patterns as the *argumentative buildup* to "por isso K8s exists"
-   - **Failover** (concept) is taught right before **ReplicaSet** (5.11, the K8s primitive that implements it — same module)
-   - **Self Healing** (concept) is taught right before **Probes** (6.06, the mechanism that implements it — Module 6)
-2. **Console first, then IaC** — many AWS services are introduced manually via Console, then re-provisioned with OpenTofu. Pattern visible in Module 4 (RDS, ElastiCache, MSK), continues in Module 7 (EKS, node groups, add-ons, EBS CSI, ACM).
-3. **No mini-labs** in Module 1 — only the final challenge (`1.13. Desafio: desenhar arquitetura on-premise vs cloud`). All hands-on starts from Module 2.
-4. **Module 4 has two challenges** — `4.16 Desafio: Criando Módulo ElastiCache` and `4.19 Desafio: Modulo MSK`. Pattern: provide the service hands-on first, then challenge the student to modularize it.
-5. **Cloud concepts stay in Module 1; compute primitives go to Module 5** — VMs, Containers, CNCF, and Service Instance Patterns moved to Module 5 opening so they're contiguous with K8s. Module 1 is now exclusively "what is cloud + operational properties + when to migrate."
-6. **Network basics stay in Module 2, not duplicated in Module 1** — Module 2.05 (VPC fundamentals) and Module 2.06 (CIDR) cover IP/DNS/subnets, so Module 1 omits them.
+1. **Conceito → Implementação** — conceitos abstratos são ensinados imediatamente antes de sua implementação concreta, não separadamente:
+   - O Módulo 5 abre com VMs/Containers/CNCF/Service Instance Patterns como *construção argumentativa* para "por isso o K8s existe"
+   - **Failover** (conceito) é ensinado logo antes do **ReplicaSet** (5.11, o primitivo do K8s que o implementa — mesmo módulo)
+   - **Self Healing** (conceito) é ensinado logo antes das **Probes** (6.06, o mecanismo que o implementa — Módulo 6)
+2. **Console primeiro, depois IaC** — muitos serviços AWS são introduzidos manualmente pelo Console e depois reprovisionados com OpenTofu. Padrão visível no Módulo 4 (RDS, ElastiCache, MSK) e que continua no Módulo 7 (EKS, node groups, add-ons, EBS CSI, ACM).
+3. **Sem mini-labs** no Módulo 1 — apenas o desafio final (`1.13. Desafio: desenhar arquitetura on-premise vs cloud`). Todo o hands-on começa a partir do Módulo 2.
+4. **O Módulo 4 tem dois desafios** — `4.16 Desafio: Criando Módulo ElastiCache` e `4.19 Desafio: Modulo MSK`. Padrão: primeiro entregar o serviço hands-on, depois desafiar o aluno a modularizá-lo.
+5. **Conceitos de cloud ficam no Módulo 1; primitivos de computação vão para o Módulo 5** — VMs, Containers, CNCF e Service Instance Patterns foram movidos para a abertura do Módulo 5 para ficarem contíguos ao K8s. O Módulo 1 agora é exclusivamente "o que é cloud + propriedades operacionais + quando migrar".
+6. **Fundamentos de rede ficam no Módulo 2, não duplicados no Módulo 1** — os itens 2.05 (fundamentos de VPC) e 2.06 (CIDR) cobrem IP/DNS/subnets, então o Módulo 1 omite esses tópicos.
 
-### Known gaps (intentional, not omissions)
+### Lacunas conhecidas (intencionais, não omissões)
 
-- **IAM** — introduced pointwise in Modules 6/7/9 only where needed (K8s RBAC, EKS setup, secrets); no dedicated module.
-- **FinOps** — only `1.07 Modelos de precificação`; no deeper coverage planned.
+- **IAM** — introduzido pontualmente nos Módulos 6/7/9 apenas onde é necessário (RBAC do K8s, setup do EKS, segredos); sem módulo dedicado.
+- **FinOps** — apenas `1.07 Modelos de precificação`; sem cobertura mais profunda planejada.
 
-## OpenTofu Commands
+## Comandos OpenTofu
 
-All commands use `tofu`, not `terraform`.
+Todos os comandos usam `tofu`, não `terraform`.
 
 ```bash
-tofu init       # initialize providers and modules
-tofu validate   # validate configuration syntax
-tofu fmt -recursive  # format all .tofu files
-tofu plan       # preview changes
-tofu apply      # apply changes
-tofu destroy    # destroy all resources
+tofu init       # inicializa providers e módulos
+tofu validate   # valida a sintaxe da configuração
+tofu fmt -recursive  # formata todos os arquivos .tofu
+tofu plan       # prévia das mudanças
+tofu apply      # aplica as mudanças
+tofu destroy    # destrói todos os recursos
 ```
 
-For lessons with the multi-environment structure (`envs/dev`, `envs/prod`), run commands from inside the environment directory:
+Para aulas com a estrutura multi-ambiente (`envs/dev`, `envs/prod`), execute os comandos de dentro do diretório do ambiente:
 
 ```bash
-cd <lesson>/envs/dev
+cd <aula>/envs/dev
 tofu init
 tofu plan
 tofu apply
 ```
 
-## Architecture
+## Arquitetura
 
-### Lesson Progression
+### Progressão das aulas
 
-- **Module 3 (03.XX) — Infraestrutura como Código (IaC) na AWS:** OpenTofu fundamentals + provisioning a complete network from scratch. Flat structure, single directory with `main.tofu`, `variables.tofu`, `outputs.tofu`, `providers.tofu`. Builds up to: VPC + public/private subnets + IGW + NAT Gateway + route tables + Security Groups (Bastion + Private) + EC2 (public + private), all via OpenTofu. Ends with connectivity tests and destroy.
-- **Module 4 (04.XX) — IaC Modular e Serviços Gerenciados na AWS:** Modularization (dynamic blocks, for expressions, lifecycle) and managed services. Introduces `modules/vpc`, `modules/ec2`, `modules/rds`, `modules/elasticache`, `modules/msk`. Multi-env structure (`envs/dev`, `envs/prod`) from `04.07-explorando-multi-env` onward.
+- **Módulo 3 (03.XX) — Infraestrutura como Código (IaC) na AWS:** fundamentos do OpenTofu + provisionamento de uma rede completa do zero. Estrutura flat, um único diretório com `main.tofu`, `variables.tofu`, `outputs.tofu`, `providers.tofu`. Constrói até: VPC + subnets públicas/privadas + IGW + NAT Gateway + route tables + Security Groups (Bastion + Private) + EC2 (pública + privada), tudo via OpenTofu. Termina com testes de conectividade e destroy.
+- **Módulo 4 (04.XX) — IaC Modular e Serviços Gerenciados na AWS:** modularização (dynamic blocks, for expressions, lifecycle) e serviços gerenciados. Introduz `modules/vpc`, `modules/ec2`, `modules/rds`, `modules/elasticache`, `modules/msk`. Estrutura multi-ambiente (`envs/dev`, `envs/prod`) a partir de `04.07-explorando-multi-env`.
 
-### Lesson Directory Naming
+### Nomenclatura dos diretórios de aula
 
-Directories follow `<MM>.<NN>-<kebab-case-title>/`:
+Os diretórios seguem `<MM>.<NN>-<titulo-em-kebab-case>/`:
 - `03.07-trabalhando-com-variaveis/`
 - `04.13-configurando-backup-e-manutencao-no-rds/`
 
-Numbering follows the ementa. Occasional `*-final/` variants indicate the "after fixing" state of an aula (e.g. `04.13-configurando-backup-e-manutencao-no-rds-final/`).
+A numeração segue a ementa. Variantes ocasionais `*-final/` indicam o estado "após a correção" de uma aula (ex.: `04.13-configurando-backup-e-manutencao-no-rds-final/`).
 
-### Module 4 Final Structure (from `04.07-explorando-multi-env` onward)
+### Estrutura final do Módulo 4 (a partir de `04.07-explorando-multi-env`)
 
 ```
-<lesson>/
+<aula>/
 ├── modules/
-│   ├── vpc/          # VPC, subnets (public/private), IGW, NAT Gateway, route tables
-│   ├── ec2/          # Key pair (TLS generated), EIP, EC2 instance, security group
-│   ├── rds/          # RDS PostgreSQL: parameter groups, backup, maintenance window, secure password
+│   ├── vpc/          # VPC, subnets (públicas/privadas), IGW, NAT Gateway, route tables
+│   ├── ec2/          # Key pair (TLS gerado), EIP, instância EC2, security group
+│   ├── rds/          # RDS PostgreSQL: parameter groups, backup, janela de manutenção, senha segura
 │   ├── elasticache/  # ElastiCache Valkey
 │   └── msk/          # Amazon MSK (Kafka)
 ├── envs/
-│   ├── dev/          # Root module for development environment
-│   └── prod/         # Root module for production environment
+│   ├── dev/          # Root module do ambiente de desenvolvimento
+│   └── prod/         # Root module do ambiente de produção
 ```
 
-Each `envs/<env>/` directory is an independent root module. Composition files grow as modules are added: `main.tofu`, `vpc.tofu`, `ec2.tofu`, `rds.tofu`, `elasticache.tofu`, `msk.tofu`, `data.tofu`, `local.tofu`, `variables.tofu`, `outputs.tofu`, `providers.tofu`.
+Cada diretório `envs/<env>/` é um root module independente. Os arquivos de composição crescem conforme os módulos são adicionados: `main.tofu`, `vpc.tofu`, `ec2.tofu`, `rds.tofu`, `elasticache.tofu`, `msk.tofu`, `data.tofu`, `local.tofu`, `variables.tofu`, `outputs.tofu`, `providers.tofu`.
 
-### Module Data Flow
+### Fluxo de dados entre módulos
 
 ```
 module.vpc.vpc_id             → module.ec2, module.rds, module.elasticache, module.msk (placement, SG)
-module.vpc.public_subnet_ids  → module.ec2 (bastion host placement)
-module.vpc.private_subnet_ids → module.rds, module.elasticache, module.msk (private placement)
-module.vpc.vpc_cidr           → module.ec2, module.rds, module.elasticache, module.msk (SG CIDR rules)
+module.vpc.public_subnet_ids  → module.ec2 (placement do bastion host)
+module.vpc.private_subnet_ids → module.rds, module.elasticache, module.msk (placement privado)
+module.vpc.vpc_cidr           → module.ec2, module.rds, module.elasticache, module.msk (regras CIDR do SG)
 ```
 
-### Remote State
+### Estado remoto
 
-State is stored in S3. The backend is configured in `providers.tofu`:
+O estado é armazenado no S3. O backend é configurado em `providers.tofu`:
 - Bucket: `algadelivery-tfstate`
 - Key: `algadelivery/${var.environment}/remote.tfstate`
 
-### Key Design Patterns
+### Principais padrões de design
 
-- **`common_tags`** local propagates `Environment` and `ManagedBy = "OpenTofu"` to all resources via `merge(var.common_tags, { Name = "..." })`
-- **Dynamic blocks** for security group ingress/egress rules — rules are passed as `list(object({...}))` variables (introduced `04.02-utilizando-dynamic-blocks`)
-- **For expressions and type constraints** introduced in `04.04-tipos-de-coleção-e-for-expressions`
-- **`ngw_regional_mode`**: boolean variable translated to `"regional"` or `"zonal"` in locals, controlling NAT Gateway availability mode
-- **`lifecycle { prevent_destroy = true; ignore_changes = [ami] }`** on EC2 instances starting from `04.08-utilizando-o-lifecycle`
-- **SSH key pairs** are generated at apply time via `tls_private_key` + `aws_key_pair` + `local_sensitive_file` (`.pem` written to `path.root`, gitignored)
-- **My public IP** is fetched dynamically via `data.http.my_public_ip` and used in bastion SSH rules
-- **RDS secure passwords**: managed via `random_password` (introduced in `04.11-gerenciando-senhas-com-segurança-no-rds`) — never committed; sensitive outputs
-- **RDS backup & maintenance window**: configured via dedicated module variables from `04.13-configurando-backup-e-manutencao-no-rds` onward
+- O local **`common_tags`** propaga `Environment` e `ManagedBy = "OpenTofu"` para todos os recursos via `merge(var.common_tags, { Name = "..." })`
+- **Dynamic blocks** para regras de ingress/egress de security group — as regras são passadas como variáveis `list(object({...}))` (introduzido em `04.02-utilizando-dynamic-blocks`)
+- **For expressions e type constraints** introduzidos em `04.04-tipos-de-coleção-e-for-expressions`
+- **`ngw_regional_mode`**: variável booleana traduzida para `"regional"` ou `"zonal"` nos locals, controlando o modo de disponibilidade do NAT Gateway
+- **`lifecycle { prevent_destroy = true; ignore_changes = [ami] }`** nas instâncias EC2 a partir de `04.08-utilizando-o-lifecycle`
+- **Key pairs SSH** são geradas em tempo de apply via `tls_private_key` + `aws_key_pair` + `local_sensitive_file` (`.pem` gravado em `path.root`, no gitignore)
+- **Meu IP público** é obtido dinamicamente via `data.http.my_public_ip` e usado nas regras de SSH do bastion
+- **Senhas seguras do RDS**: gerenciadas via `random_password` (introduzido em `04.11-gerenciando-senhas-com-segurança-no-rds`) — nunca commitadas; outputs sensíveis
+- **Backup e janela de manutenção do RDS**: configurados via variáveis dedicadas do módulo a partir de `04.13-configurando-backup-e-manutencao-no-rds`
 
-### Providers (Module 4 — current)
+### Providers (Módulo 4 — atual)
 
-| Provider | Version | Use |
+| Provider | Versão | Uso |
 |---|---|---|
-| `hashicorp/aws` | `~> 6.0` | All AWS resources (VPC, EC2, RDS, ElastiCache, MSK, etc.) |
-| `hashicorp/http` | `~> 3.0` | Fetch caller's public IP |
-| `hashicorp/tls` | `~> 4.0` | Generate RSA key pairs |
-| `hashicorp/local` | `~> 2.0` | Write `.pem` files to disk |
-| `hashicorp/random` | `~> 3.0` | Generate secure RDS passwords |
+| `hashicorp/aws` | `~> 6.0` | Todos os recursos AWS (VPC, EC2, RDS, ElastiCache, MSK, etc.) |
+| `hashicorp/http` | `~> 3.0` | Obter o IP público do chamador |
+| `hashicorp/tls` | `~> 4.0` | Gerar key pairs RSA |
+| `hashicorp/local` | `~> 2.0` | Gravar arquivos `.pem` em disco |
+| `hashicorp/random` | `~> 3.0` | Gerar senhas seguras do RDS |
 
-### Planned Providers (Modules 5+)
+### Providers planejados (Módulos 5+)
 
-| Provider | When introduced | Use |
+| Provider | Quando é introduzido | Uso |
 |---|---|---|
-| `hashicorp/kubernetes` | Module 7 (EKS setup) | Kubernetes resources (namespaces, service accounts, etc.) |
-| `hashicorp/helm` | Module 7 (AWS Load Balancer Controller at `7.08`) → every actual Helm install in the course uses the provider | All Helm releases provisioned via IaC, not Helm CLI |
+| `hashicorp/kubernetes` | Módulo 7 (setup do EKS) | Recursos Kubernetes (namespaces, service accounts, etc.) |
+| `hashicorp/helm` | Módulo 7 (AWS Load Balancer Controller em `7.08`) → toda instalação Helm real do curso usa o provider | Todos os releases Helm provisionados via IaC, não via Helm CLI |
 
-## Planned Modules (not yet recorded)
+## Módulos planejados (ainda não registrados)
 
-### Module 5 — Kubernetes: Fundamentos e Workloads (local with Kind)
+### Módulo 5 — Kubernetes: Fundamentos e Workloads (local com Kind)
 
-First half of the K8s content (17 aulas). Opens with a **conceptual bridge** (compute primitives → orchestration patterns → K8s), then covers the cluster setup and all workloads — the student can *deploy* an application by the end.
-- `5.01` Containers vs VMs: o problema que o K8s resolve (the 3 old intro aulas — VMs, Containers, Containers-vs-VMs — merged into one, since Docker is a course prerequisite)
+Primeira metade do conteúdo de K8s (17 aulas). Abre com uma **ponte conceitual** (primitivos de computação → padrões de orquestração → K8s), depois cobre o setup do cluster e todos os workloads — o aluno consegue *fazer deploy* de uma aplicação ao final.
+- `5.01` Containers vs VMs: o problema que o K8s resolve (as 3 antigas aulas de introdução — VMs, Containers, Containers-vs-VMs — fundidas em uma, já que Docker é pré-requisito do curso)
 - `5.02` Cloud Native + ecossistema CNCF
-- `5.03–5.05` Service Instance Patterns (Host [single + multiple] → VM → Container) — argues the *need* for K8s
-- `5.06` K8s architecture, Control Plane, Worker Nodes
+- `5.03–5.05` Service Instance Patterns (Host [single + multiple] → VM → Container) — argumenta a *necessidade* do K8s
+- `5.06` Arquitetura do K8s, Control Plane, Worker Nodes
 - `5.07` Setup: kubectl + Kind + cluster local
-- `5.08` Pods: ciclo de vida, criação e multi-container (multi-container merged in)
-- `5.09` Sidecar Pattern na prática — the named pattern built on the multi-container mechanism from `5.08` (moved here from Module 6, so mechanism → pattern stays contiguous)
-- `5.10` Failover (concept) → `5.11` ReplicaSet (implementation) — pairing kept intact
-- `5.12` Deployments e estratégias de deployment (Deployments + Rolling/Recreate/Rollback merged into one)
-- `5.13` ConfigMaps e Secrets (moved next to Deployments so the workload is parameterized before exposure)
+- `5.08` Pods: ciclo de vida, criação e multi-container (multi-container fundido aqui)
+- `5.09` Sidecar Pattern na prática — o padrão nomeado construído sobre o mecanismo multi-container de `5.08` (movido do Módulo 6 para cá, mantendo mecanismo → padrão contíguos)
+- `5.10` Failover (conceito) → `5.11` ReplicaSet (implementação) — pareamento mantido intacto
+- `5.12` Deployments e estratégias de deployment (Deployments + Rolling/Recreate/Rollback fundidos em um)
+- `5.13` ConfigMaps e Secrets (movido para perto de Deployments para o workload ser parametrizado antes da exposição)
 - `5.14–5.16` StatefulSets, DaemonSets, Jobs/CronJobs
-- `5.17` Aplicando Service Instance per Container com Pods — closes the Service Instance Patterns arc
+- `5.17` Aplicando Service Instance per Container com Pods — fecha o arco dos Service Instance Patterns
 
-### Module 6 — Kubernetes: Rede, Escala e Segurança (local with Kind)
+### Módulo 6 — Kubernetes: Rede, Escala e Segurança (local com Kind)
 
-Second half of the K8s content (17 aulas). Covers how to *operate, expose, scale and protect* the workloads from Module 5.
-- `6.01` Namespaces, Labels, Selectors e Annotations (Namespaces merged with Labels/Selectors) — opens the module directly on Services concerns; the old `6.01 Service Deployment Platform` was dropped as redundant with `5.12` Deployments, and Sidecar moved to `5.09`
-- `6.02` Services: ClusterIP e NodePort (ClusterIP + NodePort merged)
-- `6.03–6.05` Headless Services (callback to StatefulSets in 5.14), Service Discovery/DNS, Ingress (NGINX)
-- `6.06` Self Healing com Readiness, Liveness e Startup Probes (merged) — Self Healing concept → Probes pairing
+Segunda metade do conteúdo de K8s (17 aulas). Cobre como *operar, expor, escalar e proteger* os workloads do Módulo 5.
+- `6.01` Namespaces, Labels, Selectors e Annotations (Namespaces fundido com Labels/Selectors) — abre o módulo direto nas preocupações de Services; a antiga `6.01 Service Deployment Platform` foi removida por ser redundante com `5.12` Deployments, e o Sidecar foi para `5.09`
+- `6.02` Services: ClusterIP e NodePort (ClusterIP + NodePort fundidos)
+- `6.03–6.05` Headless Services (callback aos StatefulSets em 5.14), Service Discovery/DNS, Ingress (NGINX)
+- `6.06` Self Healing com Readiness, Liveness e Startup Probes (fundidos) — pareamento conceito de Self Healing → Probes
 - `6.07–6.08` Resource Requests/Limits/QoS, Metrics Server + HPA
-- `6.09` **Grafana k6** — the load-testing tool itself: install, scripts, VUs, stages, thresholds and reading metrics (split from the old single K6 aula so tooling is taught before it's applied)
-- `6.10` **Load testing com k6** — applies k6 to empirically validate HPA autoscaling, self-healing and availability (pod-level autoscaling only; node-level autoscaling via Cluster Autoscaler/Karpenter was intentionally cut from Module 7)
-- `6.11–6.13` Node Selector, Affinity e Anti-Affinity (node + pod merged into one aula), Taints e Tolerations
+- `6.09` **Grafana k6** — a própria ferramenta de teste de carga: instalação, scripts, VUs, stages, thresholds e leitura de métricas (separada da antiga aula única de K6 para a ferramenta ser ensinada antes de aplicada)
+- `6.10` **Load testing com k6** — aplica o k6 para validar empiricamente o autoscaling do HPA, self-healing e disponibilidade (apenas autoscaling em nível de pod; autoscaling em nível de node via Cluster Autoscaler/Karpenter foi intencionalmente cortado do Módulo 7)
+- `6.11–6.13` Node Selector, Affinity e Anti-Affinity (node + pod fundidos em uma aula), Taints e Tolerations
 - `6.14` Persistent Volumes, PVC, Storage Classes
-- `6.15` Service Accounts e RBAC (identity + authorization merged)
-- `6.16` Lens: desktop GUI/IDE for cluster management (Port-forward and Proxy are NOT taught here — they're shown indirectly in another aula)
-- `6.17` Rancher: web-based cluster management platform (split from Lens — different scope: multi-cluster management UI vs. local desktop GUI)
+- `6.15` Service Accounts e RBAC (identidade + autorização fundidos)
+- `6.16` Lens: GUI/IDE desktop para gestão de cluster (Port-forward e Proxy NÃO são ensinados aqui — aparecem indiretamente em outra aula)
+- `6.17` Rancher: plataforma web de gestão de cluster (separada do Lens — escopo diferente: UI de gestão multi-cluster vs. GUI desktop local)
 
-### Module 7 — Provisionando o cluster EKS na AWS com OpenTofu
+### Módulo 7 — Provisionando o cluster EKS na AWS com OpenTofu
 
-Pure infrastructure provisioning before any application deploy. Each managed component follows the **Console → OpenTofu** pattern:
-- EKS cluster, node groups, add-ons + EBS CSI Driver
-- **No node autoscaling** — Cluster Autoscaler / Karpenter were intentionally cut. The course teaches pod-level autoscaling (HPA) in Module 6 but does NOT cover node-level autoscaling on the EKS cluster
-- **Core EKS add-ons** (VPC CNI, CoreDNS, kube-proxy) come pre-installed with the cluster (self-managed when created via API/OpenTofu, EKS-managed when created via Console). The two add-ons lessons (`7.06` Console, `7.07` OpenTofu) cover promoting them to EKS-managed add-ons **and teach the EBS CSI Driver in the same lessons** — the CSI Driver is itself an EKS add-on (NOT a default; needed for the stateful Elasticsearch PersistentVolume in Module 12), so it's folded in rather than given its own Console/OpenTofu pair
-- **AWS Load Balancer Controller** (install via Helm provider, needs IRSA/IAM) → **ALB Ingress** for L7 path/host routing (`7.08–7.09`). This is the native-AWS ingress stack — it **replaces the old NGINX Controller + NLB + Kong**. NGINX Ingress is now taught **only in Module 6** (local Kind, where ALB doesn't exist) — the narrative is "learn NGINX Ingress locally → use ALB Ingress on AWS"
-- Cloudflare account + nameservers (`7.10–7.11`)
-- **DNS (ALB record) + ACM + HTTPS together**, split Console → OpenTofu: the full TLS flow — DNS-to-ALB record + ACM request/validation + HTTPS on the ALB Ingress (cert applied via annotation) — done in the **Console** (`7.12`, Cloudflare + AWS) and re-created as **OpenTofu** (`7.13`). Merged into one lesson each because ACM DNS validation, the ALB DNS record and the cert-to-Ingress binding are one continuous workflow (validation and the ALB record are both created in Cloudflare). The **ACM concept is taught inline** at the start of `7.12` (no standalone concept aula — same inline pattern as M11.03), since managed-TLS/DNS-validation is only a few minutes of theory
-- Rancher (optional cluster management UI)
+Provisionamento de infra puro antes de qualquer deploy de aplicação. Cada componente gerenciado segue o padrão **Console → OpenTofu**:
+- Cluster EKS, node groups, add-ons + EBS CSI Driver
+- **Sem node autoscaling** — Cluster Autoscaler / Karpenter foram intencionalmente cortados. O curso ensina autoscaling em nível de pod (HPA) no Módulo 6 mas NÃO cobre autoscaling em nível de node no cluster EKS
+- **Core EKS add-ons** (VPC CNI, CoreDNS, kube-proxy) já vêm pré-instalados com o cluster (self-managed quando criados via API/OpenTofu, EKS-managed quando criados via Console). As duas aulas de add-ons (`7.06` Console, `7.07` OpenTofu) cobrem promovê-los para EKS-managed add-ons **e ensinam o EBS CSI Driver nas mesmas aulas** — o CSI Driver é ele mesmo um EKS add-on (NÃO default; necessário para o PersistentVolume do Elasticsearch stateful no Módulo 12), então é incorporado em vez de ganhar seu próprio par Console/OpenTofu
+- **AWS Load Balancer Controller** (instalado via Helm provider, precisa de IRSA/IAM) → **ALB Ingress** para roteamento L7 por path/host (`7.08–7.09`). Esta é a stack de ingress nativa da AWS e **substitui o antigo NGINX Controller + NLB + Kong**. O NGINX Ingress agora é ensinado **apenas no Módulo 6** (Kind local, onde o ALB não existe) — a narrativa é "aprender NGINX Ingress localmente → usar ALB Ingress na AWS"
+- Conta Cloudflare + nameservers (`7.10–7.11`)
+- **DNS (record do ALB) + ACM + HTTPS juntos**, separados em Console → OpenTofu: o fluxo TLS completo — record DNS-para-ALB + request/validação do ACM + HTTPS no ALB Ingress (cert aplicado via annotation) — feito no **Console** (`7.12`, Cloudflare + AWS) e recriado como **OpenTofu** (`7.13`). Fundido em uma aula cada porque a validação DNS do ACM, o record DNS do ALB e o binding do cert ao Ingress são um único fluxo contínuo (a validação e o record do ALB são ambos criados no Cloudflare). O **conceito de ACM é ensinado inline** no início de `7.12` (sem aula de conceito standalone — mesmo padrão inline de M11.03), já que TLS gerenciado/validação DNS é apenas alguns minutos de teoria
+- Rancher (UI opcional de gestão de cluster)
 
-**No API Gateway:** the course intentionally uses **plain ALB Ingress (routing + TLS only)**, not an API gateway. Kong was fully removed. Auth/rate-limiting are NOT handled at the edge — they stay at the application level (Spring). If those edge features are ever needed, the ALB-native path is AWS WAF + OIDC/Cognito (not in scope).
+**Sem API Gateway:** o curso usa intencionalmente **ALB Ingress puro (roteamento + TLS apenas)**, não um API gateway. O Kong foi totalmente removido. Auth/rate-limiting NÃO são tratados na borda — ficam no nível da aplicação (Spring). Se esses recursos de borda forem necessários um dia, o caminho ALB-native é AWS WAF + OIDC/Cognito (fora do escopo).
 
-### Module 8 — Ferramentas de Deploy e GitOps
+### Módulo 8 — Ferramentas de Deploy e GitOps
 
-16 aulas. **Kustomize was dropped entirely** (the 3 Kustomize aulas removed) — Helm covers both templating and multi-env config via `values`, so Kustomize was redundant. The module flows manifest-management challenges (`8.02`) → Helm (`8.03–8.08`) → GitOps/ArgoCD (`8.09–8.16`), ending at `8.16 Continuous Deployment na prática com GitLab e ArgoCD`. (The old Kong/API-Gateway block was removed earlier when the ingress stack moved to ALB — routing now lives in the ALB Ingress, Module 7 / Module 10. Argo Rollouts was also dropped.)
+16 aulas. **O Kustomize foi totalmente removido** (as 3 aulas de Kustomize foram excluídas) — o Helm cobre tanto templating quanto config multi-ambiente via `values`, então o Kustomize era redundante. O módulo flui de desafios de gerenciamento de manifestos (`8.02`) → Helm (`8.03–8.08`) → GitOps/ArgoCD (`8.09–8.16`), terminando em `8.16 Continuous Deployment na prática com GitLab e ArgoCD`. (O antigo bloco de Kong/API-Gateway foi removido antes, quando a stack de ingress migrou para ALB — o roteamento agora vive no ALB Ingress, Módulo 7 / Módulo 10. O Argo Rollouts também foi removido.)
 
-**Critical rule:** `8.03–8.05` teach Helm CLI conceptually (chart anatomy, `helm install/upgrade/rollback`), but **every actual Helm install in the course uses the OpenTofu Helm provider, not the CLI** — e.g. AWS Load Balancer Controller (`7.08`), ArgoCD (`8.11 Instalando ArgoCD via Helm provider no OpenTofu`), and in Module 12 the kube-prometheus-stack (`12.05`) and the ECK operator (`12.11`).
+**Regra crítica:** `8.03–8.05` ensinam o Helm CLI conceitualmente (anatomia do chart, `helm install/upgrade/rollback`), mas **toda instalação Helm real do curso usa o Helm provider do OpenTofu, não o CLI** — ex.: AWS Load Balancer Controller (`7.08`), ArgoCD (`8.11 Instalando ArgoCD via Helm provider no OpenTofu`) e, no Módulo 12, o kube-prometheus-stack (`12.05`) e o operator ECK (`12.11`).
 
-### Module 10 — Deploy AlgaDelivery backend (uses the prepared infra from Module 7)
+### Módulo 10 — Deploy do backend do AlgaDelivery (usa a infra preparada no Módulo 7)
 
-Slim module (6 aulas). Focuses purely on USING what was already taught/provisioned — does NOT re-teach or re-provision anything. Cut from 10 → 6 aulas by removing everything already covered elsewhere:
-- **ALB Ingress** — the mechanism was taught in Module 7 (`7.08–7.09`); here it's just another templated manifest **inside the AlgaDelivery Helm Chart** (`10.02`), NOT a standalone lesson
-- **Config externalization (Parameter Store)** — fully taught in Module 9 (`9.03–9.08`, incl. Spring Cloud AWS); the AlgaDelivery-specific paths are wired into the Helm `values` (`10.03`), NOT re-taught
-- **ArgoCD is NOT installed here** — it was installed once in Module 8 (`8.11`, via OpenTofu Helm provider on EKS). Module 10 only registers the AlgaDelivery **Application** (`10.04`). The old `10.07 Instalando ArgoCD` was a literal duplicate of `8.11` and was removed
-- What remains is genuinely new: Helm Charts of the app (`10.02`, incl. Ingress), multi-env values (`10.03`), ArgoCD Application (`10.04`), the full GitOps pipeline (`10.05`), production test (`10.06` — the course-wide "Conclusão e próximos passos" is at the end of Module 12)
+Módulo enxuto (6 aulas). Foca puramente em USAR o que já foi ensinado/provisionado — NÃO reensina nem reprovisiona nada. Cortado de 10 → 6 aulas removendo tudo que já foi coberto em outro lugar:
+- **ALB Ingress** — o mecanismo foi ensinado no Módulo 7 (`7.08–7.09`); aqui é apenas mais um manifesto templatizado **dentro do Helm Chart do AlgaDelivery** (`10.02`), NÃO uma aula standalone
+- **Externalização de config (Parameter Store)** — totalmente ensinada no Módulo 9 (`9.03–9.08`, incl. Spring Cloud AWS); os paths específicos do AlgaDelivery são conectados nos `values` do Helm (`10.03`), NÃO reensinados
+- **O ArgoCD NÃO é instalado aqui** — foi instalado uma vez no Módulo 8 (`8.11`, via Helm provider do OpenTofu no EKS). O Módulo 10 apenas registra a **Application** do AlgaDelivery (`10.04`). A antiga `10.07 Instalando ArgoCD` era uma duplicata literal de `8.11` e foi removida
+- O que resta é genuinamente novo: Helm Charts da aplicação (`10.02`, incl. Ingress), values multi-ambiente (`10.03`), ArgoCD Application (`10.04`), a pipeline GitOps completa (`10.05`), teste em produção (`10.06` — a "Conclusão e próximos passos" do curso inteiro fica ao final do Módulo 12)
 
-### Module 11 — Deploy do Frontend do AlgaDelivery (S3 + CloudFront)
+### Módulo 11 — Deploy do Frontend do AlgaDelivery (S3 + CloudFront)
 
-Dedicated frontend module (6 aulas). The SPA is **static** — hosted on S3 + CloudFront, **not** on the cluster. Comes after Module 10 because it consumes the API already exposed by the ALB Ingress (`10.03`). Opens with a **project intro** (`11.01`: run the frontend locally, pipeline overview, what gets deployed) and a full **private S3 + CloudFront + OAC Console deploy** (`11.02`) — the proper secure setup, not a throwaway — for an early win. The **Console → OpenTofu** pair is symmetric: `11.02` does it in the Console, `11.03` re-creates the exact same stack (private S3 + CloudFront + OAC) as code in **one lesson** (CDN/cache/OAC concepts explained inline — no standalone concepts aula, since `11.02` already demoed it; and the OAC bucket policy closes in the same lesson because the distribution ARN exists there). Deliberately contrasts with the backend deploy: **push-based CI** (GitLab → `s3 sync` → CloudFront invalidation), NOT GitOps/ArgoCD. The stack is kept in this module (not split into Module 7) since the CloudFront config is tightly coupled to the frontend app.
-- `11.03` **Criando S3 privado + CloudFront com OAC com OpenTofu** — private bucket (public-access-block + `BucketOwnerEnforced`) + CloudFront distribution + OAC + bucket policy, all in one
-- **ACM cert in `us-east-1`** (`11.04`, mandatory for CloudFront regardless of the infra's region — contrast with the regional ACM for Ingress in Module 7) + custom domain via Cloudflare DNS
-- `11.05` **SPA routing** (CloudFront custom error responses 403/404 → `index.html`) + frontend API base URL pointing at the ALB Ingress + CORS
-- `11.06` GitLab CI pipeline: build → `s3 sync` → CloudFront invalidation; cache busting / asset versioning + prod test
-- Ends at `11.06` (frontend live); the course-wide "Conclusão e próximos passos" closes Module 12
+Módulo dedicado ao frontend (6 aulas). A SPA é **estática** — hospedada em S3 + CloudFront, **não** no cluster. Vem depois do Módulo 10 porque consome a API já exposta pelo ALB Ingress (`10.02`). Abre com uma **introdução ao projeto** (`11.01`: rodar o frontend localmente, visão geral da pipeline, o que vai ser feito deploy) e um **deploy completo de S3 privado + CloudFront + OAC no Console** (`11.02`) — o setup seguro adequado, não descartável — para uma vitória rápida. O par **Console → OpenTofu** é simétrico: `11.02` faz no Console, `11.03` recria a mesma stack (S3 privado + CloudFront + OAC) como código em **uma aula** (conceitos de CDN/cache/OAC explicados inline — sem aula de conceitos standalone, já que `11.02` já demonstrou; e a bucket policy do OAC fecha na mesma aula porque o ARN da distribution existe lá). Contrasta deliberadamente com o deploy do backend: **CI push-based** (GitLab → `s3 sync` → invalidação do CloudFront), NÃO GitOps/ArgoCD. A stack fica neste módulo (não separada no Módulo 7) já que a config do CloudFront é fortemente acoplada à app frontend.
+- `11.03` **Criando S3 privado + CloudFront com OAC com OpenTofu** — bucket privado (public-access-block + `BucketOwnerEnforced`) + distribution CloudFront + OAC + bucket policy, tudo em um
+- **Cert ACM em `us-east-1`** (`11.04`, obrigatório para CloudFront independente da região da infra — contraste com o ACM regional para Ingress no Módulo 7) + domínio customizado via Cloudflare DNS
+- `11.05` **Routing de SPA** (custom error responses 403/404 do CloudFront → `index.html`) + API base URL do frontend apontando para o ALB Ingress + CORS
+- `11.06` Pipeline GitLab CI: build → `s3 sync` → invalidação do CloudFront; cache busting / versionamento de assets + teste em prod
+- Termina em `11.06` (frontend no ar); a "Conclusão e próximos passos" do curso inteiro fecha o Módulo 12
 
-### Module 12 — Observabilidade em Produção: Prometheus, Grafana e Elastic APM
+### Módulo 12 — Observabilidade em Produção: Prometheus, Grafana e Elastic APM
 
-Final teaching module before the appendix (20 aulas). Observes the fully-deployed AlgaDelivery (backend M10 + frontend M11) in production. **Two complementary systems, NOT redundant** — this distinction must be taught explicitly:
-- **Metrics (pull)**: Prometheus scrapes cpu/mem/network from container/cluster/host via exporters + Alertmanager → Grafana dashboards. Installed via `kube-prometheus-stack` (Helm provider / OpenTofu).
-- **APM (push)**: Elastic APM Java agent on the `invoice` service → APM Server (processes, indexes, ILM) → Elasticsearch (storage) → Kibana (APM UI).
+Último módulo de ensino antes do apêndice (20 aulas). Observa o AlgaDelivery totalmente implantado (backend M10 + frontend M11) em produção. **Dois sistemas complementares, NÃO redundantes** — essa distinção precisa ser ensinada explicitamente:
+- **Métricas (pull)**: o Prometheus faz scraping de cpu/mem/rede via container/cluster/host através de exporters + Alertmanager → dashboards no Grafana. Instalado via `kube-prometheus-stack` (Helm provider / OpenTofu).
+- **APM (push)**: Elastic APM Java agent no serviço `invoice` → APM Server (processa, indexa, ILM) → Elasticsearch (armazenamento) → Kibana (UI de APM).
 
-Key design decisions (per instructor):
-- Scope is **metrics + APM only** (no centralized logging / Filebeat) — faithful to the reference diagram.
-- Elastic Stack installed via the **ECK operator** (Elastic Cloud on Kubernetes) at `12.11` (concept + CRDs + install merged), itself a `helm_release` in OpenTofu; ES/Kibana/APM Server managed as CRDs.
-- **Elasticsearch single-node** (didactic simplicity, cheaper lab) with a PersistentVolume via the EBS CSI Driver.
+Decisões de design principais (do instrutor):
+- O escopo é **métricas + APM apenas** (sem logging centralizado / Filebeat) — fiel ao diagrama de referência.
+- Elastic Stack instalado via **operator ECK** (Elastic Cloud on Kubernetes) em `12.11` (conceito + CRDs + install fundidos), ele mesmo um `helm_release` no OpenTofu; ES/Kibana/APM Server gerenciados como CRDs.
+- **Elasticsearch single-node** (simplicidade didática, lab mais barato) com PersistentVolume via EBS CSI Driver.
 
-Strong callbacks that close the course's Conceito→Implementação arc:
-- **Dedicated `node-tooling` node group** (EKS managed node group, Module 7) isolated with **taints/tolerations + node affinity** (Module 6) — students applied these abstractly in M6/M7, here they protect the observability stack.
-- Elasticsearch is **stateful** → PersistentVolumes/StorageClass (Module 6) + EBS CSI Driver (Module 7).
-- All installs via the **Helm provider in OpenTofu** (course rule from `8.11`).
-- The Java agent is wired into the `invoice` Helm Chart values (Module 10).
-- Closes with `12.19 Conclusão e próximos passos` (whole system observed in production).
+Callbacks fortes que fecham o arco Conceito→Implementação do curso:
+- **Node group dedicado `node-tooling`** (EKS managed node group, Módulo 7) isolado com **taints/tolerations + node affinity** (Módulo 6) — os alunos aplicaram isso abstratamente no M6/M7; aqui protege a stack de observabilidade.
+- O Elasticsearch é **stateful** → PersistentVolumes/StorageClass (Módulo 6) + EBS CSI Driver (Módulo 7).
+- Todas as instalações via **Helm provider no OpenTofu** (regra do curso a partir de `8.11`).
+- O Java agent é conectado nos values do Helm Chart do `invoice` (Módulo 10).
+- Fecha com `12.19 Conclusão e próximos passos` (todo o sistema observado em produção).
 
-## Working with This Repo
+## Trabalhando com este repositório
 
-### When asked to create a new lesson directory
+### Ao criar um novo diretório de aula
 
-1. Confirm the lesson number and title against `EMENTA-NIVEL-11-AWS.md`
-2. Copy structure from the previous adjacent lesson (lessons are incremental snapshots)
-3. Apply ONLY the diff described by the lesson title — do not refactor unrelated files
-4. Use the naming convention `<MM>.<NN>-<kebab-case-title>/`
+1. Confirme o número e o título da aula contra `EMENTA-NIVEL-11-AWS.md`
+2. Copie a estrutura da aula adjacente anterior (as aulas são snapshots incrementais)
+3. Aplique APENAS o diff descrito pelo título da aula — não refatore arquivos não relacionados
+4. Use a convenção de nomenclatura `<MM>.<NN>-<titulo-em-kebab-case>/`
 
-### When working on Module 5+ code (planned)
+### Ao trabalhar com código dos Módulos 5+ (planejados)
 
-- These directories don't exist yet. If asked to scaffold, follow the existing pattern (incremental snapshots, one dir per aula).
-- For Helm releases in Modules 7/8/10, default to `helm_release` resources via OpenTofu, NOT `helm install` shell commands.
+- Esses diretórios ainda não existem. Se for pedido para fazer o scaffold, siga o padrão existente (snapshots incrementais, um dir por aula).
+- Para releases Helm nos Módulos 7/8/10, use por padrão recursos `helm_release` via OpenTofu, NÃO comandos shell `helm install`.
 
-### When updating the ementa
+### Ao atualizar a ementa
 
-The ementa file (`EMENTA-NIVEL-11-AWS.md`) tracks module status badges:
-- 🎥 _em gravação_ — Module 1 currently
-- ✅ _finalizado_ — Modules 2, 3, 4
-- 📋 _ementa planejada_ — Modules 5–13
+O arquivo da ementa (`EMENTA-NIVEL-11-AWS.md`) rastreia os badges de status dos módulos:
+- 🎥 _em gravação_ — Módulo 5 atualmente
+- ✅ _finalizado_ — Módulos 1, 2, 3, 4
+- 📋 _ementa planejada_ — Módulos 6–12
+- 🔜 _a planejar_ — Módulo 13 (ementa ainda não definida)
 
-Renumbering modules is fragile because aula numbers `M.NN` repeat across modules. Edit modules in reverse order (highest first) to avoid collisions.
+Renumerar módulos é frágil porque os números de aula `M.NN` se repetem entre módulos. Edite os módulos em ordem reversa (do maior para o menor) para evitar colisões.
 
-## .gitignore Rules
+## Regras do .gitignore
 
-The following are excluded and must never be committed:
+Os itens a seguir são excluídos e nunca devem ser commitados:
 - `.terraform/`, `.terraform.lock.hcl`
 - `*.tfstate`, `*.tfstate.backup`
-- `*.tfvars`, `*.tfvars.json` (use `*.example.tfvars` for templates)
-- `*.pem` (generated SSH private keys)
+- `*.tfvars`, `*.tfvars.json` (use `*.example.tfvars` para templates)
+- `*.pem` (chaves privadas SSH geradas)
 - `*.tfplan`, `*.plan`

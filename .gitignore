@@ -31,6 +31,4 @@ terraform.rc
 .terraform.test.hcl
 **.pem
 .metodologia-ensino.md
-.mcp.json
 roteiros/
-.claude/
