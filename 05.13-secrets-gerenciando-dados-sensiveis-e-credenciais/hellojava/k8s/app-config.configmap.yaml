@@ -1,0 +1,19 @@
+# ConfigMap declarativo — a forma que vai pro Git (e que o Helm/ArgoCD vao
+# templatizar nos Modulos 7 e 9). As tres formas imperativas equivalentes:
+#   kubectl create configmap app-config --from-literal=LOG_LEVEL=DEBUG --from-literal=APP_PORT=8080
+#   kubectl create configmap app-config --from-file=k8s/config/application.properties
+#   kubectl create configmap app-config --from-env-file=k8s/config/app.env
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  # chaves simples: viram variavel de ambiente e mudam o comportamento da app
+  LOG_LEVEL: "DEBUG"      # nivel do logger com.algaworks.hello
+  APP_PORT: "8080" 
+  APP_CACHE_DIR: "/tmp/cache"       # porta em que o servidor sobe (chega como SERVER_PORT)
+  # chave com conteudo multilinha: vira um ARQUIVO quando montada como volume,
+  # e o Spring carrega esse arquivo de verdade (SPRING_CONFIG_ADDITIONAL_LOCATION)
+  additional.properties: |
+    logging.pattern.console=%d{HH:mm:ss.SSS} [config-do-configmap] %-5level %logger{25} - %msg%n
+    logging.level.org.springframework.web=INFO

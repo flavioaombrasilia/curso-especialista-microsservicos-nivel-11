@@ -1,0 +1,18 @@
+# Bloco 4 — immutable: true.
+# O kubelet para de vigiar mudancas (menos carga na API) e ninguem edita por acidente.
+# O preco: nao da pra alterar o objeto. Para "mudar" a config, cria-se um ConfigMap
+# NOVO (outro nome) e o Deployment passa a apontar pra ele:
+#   kubectl apply -f hellojava/k8s/app-config-v2.configmap.yaml
+#   (e no Deployment, trocar `name: app-config` por `name: app-config-v2`)
+# Trocar o nome referenciado muda o template do Pod => rollout (5.09) e rollback (5.10) de graca.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config-v3
+immutable: true
+data:
+  LOG_LEVEL: "WARN"       # producao: o log de DEBUG da app cala
+  APP_PORT: "9090"        # e a porta muda junto — config nova, Pod novo
+  additional.properties: |
+    logging.pattern.console=%d{HH:mm:ss.SSS} [prod] %-5level %logger{25} - %msg%n
+    logging.level.org.springframework.web=WARN

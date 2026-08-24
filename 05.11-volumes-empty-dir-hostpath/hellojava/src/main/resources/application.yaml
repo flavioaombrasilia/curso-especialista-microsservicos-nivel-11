@@ -1,0 +1,3 @@
+app:
+  # o manifesto decide onde o cache mora; sem env, cai no default
+  cache-dir: ${APP_CACHE_DIR:/dados/cache}

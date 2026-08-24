@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava
+  labels:
+    app: hellojava
+  annotations:
+    kubernetes.io/change-cause: "Mudando a aplicação para a versão 3"
+spec:
+  replicas: 4
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: hellojava
+  template:
+    metadata:
+      labels:
+        app: hellojava
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v3
+        ports:
+          - containerPort: 8080

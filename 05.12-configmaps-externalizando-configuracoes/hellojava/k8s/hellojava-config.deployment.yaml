@@ -1,0 +1,41 @@
+# Estado INICIAL do bloco 3: config chegando SO por variavel de ambiente.
+#   (a) envFrom.configMapRef -> todas as chaves simples do ConfigMap viram env
+#   (b) env.valueFrom.configMapKeyRef -> UMA chave, renomeada para o nome que o
+#       Spring entende: a chave APP_PORT chega como SERVER_PORT e a porta muda de verdade
+# O arquivo application.properties do ConfigMap ainda NAO chega no container —
+# o volume entra no passo seguinte (k8s/hellojava-config-volume.deployment.yaml).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava-config
+  labels:
+    app: hellojava-config
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hellojava-config
+  template:
+    metadata:
+      labels:
+        app: hellojava-config
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v5
+        ports:
+          # documental: se APP_PORT mudar no ConfigMap, atualizar aqui tambem
+          - containerPort: 8080
+        envFrom:
+          # (a) o ConfigMap inteiro de uma vez: LOG_LEVEL e APP_PORT viram env.
+          # LOG_LEVEL o Spring usa direto (logging.level.com.algaworks.hello);
+          # APP_PORT, com esse nome, nao significa nada pra ele — dai o (b).
+          - configMapRef:
+              name: app-config
+        env:
+          # (b) mesma chave, outro nome: SERVER_PORT vira server.port por relaxed binding
+          - name: SERVER_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: APP_PORT
