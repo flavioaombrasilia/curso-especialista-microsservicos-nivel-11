@@ -1,0 +1,40 @@
+# Bloco 4 — readiness + liveness. A liveness e DELIBERADAMENTE mais tolerante
+# que a readiness (initialDelaySeconds + failureThreshold maiores): readiness e
+# reversivel e barata, liveness e destrutiva (mata e recria o container).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava
+  labels:
+    app: hellojava
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hellojava
+  template:
+    metadata:
+      labels:
+        app: hellojava
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v5
+        ports:
+          - name: http
+            containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 2
+          timeoutSeconds: 2
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          initialDelaySeconds: 20   # da tempo do Spring Boot subir
+          periodSeconds: 10
+          failureThreshold: 3       # 3 falhas seguidas = 30s de tolerancia
+          timeoutSeconds: 3

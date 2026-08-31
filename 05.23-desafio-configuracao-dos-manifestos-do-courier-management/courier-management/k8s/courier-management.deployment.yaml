@@ -1,0 +1,76 @@
+# O gemeo do `delivery-tracking.deployment.yaml` da 5.21 — de proposito.
+# Se voce precisou olhar o outro arquivo para escrever este, o desafio funcionou:
+# a graca esta em perceber as QUATRO diferencas, nao em copiar as semelhancas.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: courier-management
+  labels:
+    app: courier-management
+spec:
+  # DIFERENCA 1 — nao existe `replicas` aqui.
+  # Este servico nasce com HPA (5.22), e o checklist daquela aula e explicito:
+  # quando existe HPA, o campo `replicas` sai do manifesto. Se ele ficar, cada
+  # `kubectl apply` derruba as replicas que o HPA subiu, o HPA sobe de novo, e
+  # voce ganha um serrote. No primeiro apply o Deployment nasce com 1 replica e
+  # o HPA leva para 2 (o `minReplicas`) em segundos — e isso e o esperado.
+  selector:
+    matchLabels:
+      app: courier-management
+  template:
+    metadata:
+      labels:
+        app: courier-management     # e ESTA label que o selector do Service procura (5.07)
+    spec:
+      containers:
+      - name: courier-management
+        image: courier-management:1.0.0
+        # sem isso o kubelet tenta puxar `courier-management:1.0.0` do Docker Hub
+        # e falha com ImagePullBackOff, mesmo depois do `kind load` (5.21, bloco 1)
+        imagePullPolicy: IfNotPresent
+        ports:
+          # DIFERENCA 2 — 8081. O courier-management nasceu com esta porta
+          # (`SERVER_PORT: ${SERVER_PORT:8081}` no application.yml e `EXPOSE 8081`
+          # no Dockerfile). O nome `http` e o que permite `targetPort: http` no
+          # Service — e o que faz o Service continuar certo se a porta mudar.
+          - name: http
+            containerPort: 8081
+        env:
+          - name: JAVA_TOOL_OPTIONS
+            value: "-XX:MaxRAMPercentage=75.0"   # deixa ~25% do container fora do heap (5.19)
+        envFrom:
+          - configMapRef:
+              name: courier-management-configmap
+          - secretRef:
+              name: courier-management-secret
+        resources:
+          requests:
+            cpu: "250m"        # denominador da conta do HPA (5.22): 70% de 250m = 175m
+            memory: "512Mi"
+          limits:
+            memory: "512Mi"    # memoria: teto igual ao request — QoS previsivel, sem surpresa
+            cpu: "1000m"       # cpu: teto folgado, para pico nao virar throttling
+        # DIFERENCA 3 — as tres probes apontam para 8081.
+        # Elas funcionam porque o application.yml do courier tem
+        # `management.endpoint.health.probes.enabled: true`, que e o que cria
+        # `/actuator/health/liveness` e `/actuator/health/readiness` (5.18).
+        startupProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8081
+          periodSeconds: 5
+          failureThreshold: 30        # ate 150s de boot — Spring Boot + JPA + Flyway sobe nisso
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8081
+          periodSeconds: 10
+          failureThreshold: 3         # 30s de tolerancia depois de pronto
+          timeoutSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8081
+          periodSeconds: 5
+          failureThreshold: 2         # sai do rodizio em 10s
+          timeoutSeconds: 2

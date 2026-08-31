@@ -1,0 +1,26 @@
+# Bloco 1 — de propósito, SEM nenhuma probe. Mostra que o ReplicaSet garante
+# quantidade (3/3 Running), nao qualidade: um Pod quebrado por dentro continua
+# recebendo trafego do Service, porque ninguem perguntou como ele esta.
+# Imagem :v5 (a da 5.18, com o Actuator e o SaudeController).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava
+  labels:
+    app: hellojava
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hellojava
+  template:
+    metadata:
+      labels:
+        app: hellojava
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v5
+        ports:
+          - name: http
+            containerPort: 8080

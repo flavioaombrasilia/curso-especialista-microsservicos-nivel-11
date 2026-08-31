@@ -1,0 +1,26 @@
+{
+  "sender": {
+    "name": "Joao Silva",
+    "street": "Rua das Carambolas",
+    "number": "42",
+    "zipCode": "38400-000",
+    "phone": "34 99999-1111",
+    "complement": "",
+    "state": "MG",
+    "city": "Uberlandia"
+  },
+  "recipient": {
+    "name": "Maria Souza",
+    "street": "Av Rondon Pacheco",
+    "number": "1500",
+    "zipCode": "38400-100",
+    "phone": "34 98888-2222",
+    "complement": "",
+    "state": "MG",
+    "city": "Uberlandia"
+  },
+  "items": [
+    { "name": "Pizza", "quantity": 1 }
+  ],
+  "expectedDeliveryTime": 30
+}

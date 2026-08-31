@@ -1,0 +1,51 @@
+services:
+
+  postgres:
+    extends:
+      file: ../docker-compose.yml
+      service: postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - delivery-network
+
+  kafka:
+    extends:
+      file: ../docker-compose.yml
+      service: kafka
+    ports:
+      - "9092:9092"
+    networks:
+      - delivery-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/deliverydb
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health | grep -i UP || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    ports:
+      - "8080:8080"
+    networks:
+      - delivery-network 
+
+networks:
+  delivery-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  kafka-data:

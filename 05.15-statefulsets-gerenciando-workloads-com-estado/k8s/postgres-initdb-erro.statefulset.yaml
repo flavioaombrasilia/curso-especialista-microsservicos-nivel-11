@@ -1,0 +1,58 @@
+# "Erros para mostrar ao vivo" — o initdb reclamando de diretorio nao vazio.
+#
+# ATENCAO, detalhe que muda a demo: no Kind, a StorageClass standard (local-path)
+# entrega um DIRETORIO vazio do node — sem lost+found. Ou seja, so tirar o PGDATA
+# do manifesto NAO reproduz o erro aqui: o initdb roda e o Pod sobe feliz.
+# O erro aparece com disco de nuvem (EBS/EFS), que chega formatado e com lost+found.
+#
+# Este manifesto SIMULA aquele disco: um initContainer cria um lost+found no volume
+# antes do Postgres subir, e o container principal nao tem PGDATA em subdiretorio.
+# Resultado garantido: CrashLoopBackOff com
+#   initdb: error: directory "/var/lib/postgresql/data" exists but is not empty
+# Diagnostico em aula: `kubectl logs postgres-erro-0` — nem todo erro num Pod e do
+# Kubernetes; este e da IMAGEM, e a pista esta no log do container, nao no describe.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-erro
+  labels:
+    app: postgres-erro
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-erro
+  template:
+    metadata:
+      labels:
+        app: postgres-erro
+    spec:
+      initContainers:
+      - name: simula-disco-de-nuvem
+        image: busybox:1.37
+        command: ["sh", "-c", "mkdir -p /var/lib/postgresql/data/lost+found"]
+        volumeMounts:
+          - name: dados
+            mountPath: /var/lib/postgresql/data
+      containers:
+      - name: postgres
+        image: postgres:17.5
+        # sem PGDATA de proposito: o initdb vai apontar para o proprio mountPath
+        envFrom:
+          - secretRef:
+              name: postgres-cred
+        volumeMounts:
+          - name: dados
+            mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: dados
+        labels:
+          app: postgres-erro
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 1Gi

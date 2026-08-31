@@ -1,0 +1,70 @@
+# Backend 2 de 2 desta aula. Identico ao `hello`, de proposito: o objetivo e ter
+# DOIS destinos para o roteamento decidir entre, nao duas aplicacoes diferentes.
+# A resposta se distingue pelo campo "pod" (rastreio-...).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rastreio
+  labels:
+    app: rastreio
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rastreio
+  template:
+    metadata:
+      labels:
+        app: rastreio
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v7
+        ports:
+          - name: http
+            containerPort: 8080
+        env:
+          - name: JAVA_TOOL_OPTIONS
+            value: "-XX:MaxRAMPercentage=75.0"
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            memory: "512Mi"
+            cpu: "1000m"
+        startupProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          periodSeconds: 10
+          failureThreshold: 3
+          timeoutSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 2
+          timeoutSeconds: 2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rastreio
+  labels:
+    app: rastreio
+spec:
+  type: ClusterIP
+  selector:
+    app: rastreio
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

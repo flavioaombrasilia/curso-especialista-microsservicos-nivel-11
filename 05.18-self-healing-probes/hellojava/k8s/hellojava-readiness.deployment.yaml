@@ -1,0 +1,33 @@
+# Bloco 3 — so a readinessProbe. Quando ela falha, o controller de EndpointSlice
+# tira o IP do Pod do Service: o Pod continua vivo (RESTARTS 0), so para de
+# receber trafego. Callback forte a 5.16 (EndpointSlice) e 5.09 (rolling update
+# so avanca de verdade quando a readiness diz que o Pod novo esta pronto).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava
+  labels:
+    app: hellojava
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hellojava
+  template:
+    metadata:
+      labels:
+        app: hellojava
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v5
+        ports:
+          - name: http
+            containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          periodSeconds: 5           # pergunta a cada 5s
+          failureThreshold: 2        # 2 falhas seguidas = fora do rodizio
+          timeoutSeconds: 2

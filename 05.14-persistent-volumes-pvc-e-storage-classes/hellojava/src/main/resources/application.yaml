@@ -1,0 +1,14 @@
+# Nada aqui e fixo: todo valor tem placeholder com default. Sem ConfigMap a app
+# sobe com o default; com ConfigMap, quem manda e o manifesto.
+server:
+  # a chave APP_PORT do ConfigMap chega como SERVER_PORT e a porta REALMENTE muda
+  port: ${SERVER_PORT:8080}
+
+logging:
+  level:
+    # a chave LOG_LEVEL do ConfigMap decide o nivel do logger da aplicacao
+    com.algaworks.hello: ${LOG_LEVEL:INFO}
+
+app:
+  # o manifesto decide onde o cache mora; sem env, cai no default
+  cache-dir: ${APP_CACHE_DIR:/dados/cache}

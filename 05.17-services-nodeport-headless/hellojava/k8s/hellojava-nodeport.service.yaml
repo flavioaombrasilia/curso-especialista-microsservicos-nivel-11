@@ -1,0 +1,22 @@
+# Bloco 5 — NodePort: a porta abre em TODOS os nodes, inclusive nos que nao tem Pod.
+# PORT(S) vai aparecer como 80:30080/TCP — sao tres portas na historia:
+#   nodePort 30080 -> aberta em cada node, alcancavel de fora
+#   port 80        -> a porta do ClusterIP (todo NodePort TEM um ClusterIP)
+#   targetPort 8080-> a porta do container
+apiVersion: v1
+kind: Service
+metadata:
+  name: hellojava-np
+  labels:
+    app: hellojava
+spec:
+  type: NodePort
+  selector:
+    app: hellojava
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      nodePort: 30080       # opcional; sem isso o K8s sorteia na faixa 30000-32767.
+                            # Fixamos porque o extraPortMappings do kind-config aponta
+                            # justamente para esta porta.

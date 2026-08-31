@@ -32,3 +32,8 @@ terraform.rc
 **.pem
 .metodologia-ensino.md
 roteiros/
+.claude
+# Gradle / NetBeans (caches locais — já vazaram token uma vez)
+**/.gradle/
+**/build/
+.nb-gradle/

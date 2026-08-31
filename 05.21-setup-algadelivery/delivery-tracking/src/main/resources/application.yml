@@ -1,0 +1,83 @@
+spring:
+  application:
+    name: delivery-tracking
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/deliverydb}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping:
+          delivery-placed-event:com.algaworks.algadelivery.delivery.tracking.domain.event.DeliveryPlacedEvent,
+          delivery-picked-up-event:com.algaworks.algadelivery.delivery.tracking.domain.event.DeliveryPickUpEvent,
+          delivery-fulfilled-event:com.algaworks.algadelivery.delivery.tracking.domain.event.DeliveryFulfilledEvent
+
+server:
+  port: ${SERVER_PORT:8080}
+
+eureka:
+  client:
+    server-url:
+      default-zone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+  instance:
+    instance-id: ${random.value}
+    prefer-ip-address: true
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true       # separa a saude em dois grupos: liveness e readiness
+      show-details: always  # mostra os detalhes de cada indicador — util em aula, revisar em producao
+  endpoints:
+    web:
+      exposure:
+        include: health 
+
+resilience4j:
+  retry:
+    configs:
+      default:
+        maxAttempts: 2
+        waitDuration: 20ms
+      instances:
+        Retry_CourierAPIClient_payoutCalculation:
+          baseConfig: default
+          maxAttempts: 3
+          retryExceptions:
+            - org.springframework.web.client.ResourceAccessException
+          ignoreExceptions:
+            - org.springframework.web.client.HttpServerErrorException
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 10000
+    instances:
+      CircuitBreaker_CourierAPIClient_payoutCalculation:
+        baseConfig: default
+        waitDurationInOpenState: 5000
+
+

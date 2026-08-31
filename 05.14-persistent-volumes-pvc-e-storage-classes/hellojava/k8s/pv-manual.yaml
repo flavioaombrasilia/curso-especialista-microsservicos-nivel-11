@@ -1,0 +1,17 @@
+# Bloco 3 — provisionamento ESTATICO: o PV feito na mao.
+# Em producao quase ninguem cria PV assim; criar UM na mao e o que faz o objeto
+# deixar de ser abstrato (e e assim que um NFS/disco legado entra no cluster ate hoje).
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-manual
+spec:
+  capacity:
+    storage: 1Gi              # etiqueta usada no matchmaking com o pedido do PVC
+  accessModes:
+    - ReadWriteOnce           # RWO = um NODE (nao um Pod). Dois Pods no mesmo node compartilham
+  persistentVolumeReclaimPolicy: Retain   # o dado fica quando o PVC morrer (bloco 5)
+  storageClassName: manual    # rotulo do "lote"; nao existe SC com esse nome — e tudo bem
+  hostPath:                   # so porque isto e um lab com Kind.
+    path: /tmp/pv-manual      # em nuvem seria um volume EBS via CSI
+    type: DirectoryOrCreate

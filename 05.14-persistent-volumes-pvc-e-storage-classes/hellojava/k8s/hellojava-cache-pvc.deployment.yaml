@@ -1,0 +1,36 @@
+# Bloco 4 — o consumidor. E o MESMO Deployment da 5.11: mesma imagem, mesmo
+# volumeMounts, mesmo /dados. A unica coisa que mudou e a ORIGEM do volume:
+# onde tinha `emptyDir: {}` agora tem `persistentVolumeClaim`.
+# E e esse o argumento da aula: o manifesto da aplicacao nao sabe (nem precisa
+# saber) se embaixo tem diretorio de node, EBS, EFS ou NFS.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava-cache-pvc
+  labels:
+    app: hellojava-cache-pvc
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hellojava-cache-pvc
+  template:
+    metadata:
+      labels:
+        app: hellojava-cache-pvc
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v4
+        ports:
+          - containerPort: 8080
+        env:
+          - name: APP_CACHE_DIR
+            value: /dados/cache
+        volumeMounts:
+          - name: dados
+            mountPath: /dados
+      volumes:
+        - name: dados
+          persistentVolumeClaim:
+            claimName: cache-hellojava   # o Pod fala com o PVC, NUNCA com o PV

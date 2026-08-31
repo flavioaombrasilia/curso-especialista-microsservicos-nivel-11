@@ -1,0 +1,23 @@
+# Bloco 2 — Headless: fecha o loop da 5.15. clusterIP: None desliga o IP virtual ->
+# sem regra no kernel, sem reescrita de destino, SEM balanceamento. O Service vira
+# so uma entrada de DNS.
+#
+# Por que headless E NAO ClusterIP aqui: postgres-0 e postgres-1 sao duas instancias
+# INDEPENDENTES, cada uma com o seu proprio disco (StatefulSet nao replica dado,
+# 5.15). Balancear entre elas seria um DEFEITO, nao uma feature — voce quer falar
+# com uma instancia especifica, pelo nome dela.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  clusterIP: None
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+  # Campo que costuma aparecer junto com Headless (so citar em aula):
+  # publishNotReadyAddresses: true  -> publica no DNS ate os Pods que ainda nao estao
+  # prontos. Necessario para cluster que precisa se formar (broker, banco): os nos
+  # precisam se enxergar ANTES de ficarem prontos.

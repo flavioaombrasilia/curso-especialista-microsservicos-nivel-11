@@ -1,0 +1,34 @@
+# ATENCAO ao `metadata.name`: NAO reuse `algadelivery`.
+#
+# Os manifestos da 5.20 usam `name: algadelivery` de proposito, para que cada
+# `apply` SUBSTITUA o Ingress anterior em vez de acumular regra no cluster. Aqui
+# a intencao e o contrario: os dois servicos precisam ficar publicados ao mesmo
+# tempo. Reusar o nome apagaria a regra do `delivery-tracking` sem avisar — o
+# `apply` responde `configured` e voce descobre pelo 404.
+#
+# Duas formas corretas de publicar dois servicos:
+#   a) dois objetos Ingress, um por servico (este arquivo) — cada equipe cuida do seu;
+#   b) um Ingress com duas entradas em `rules` — um objeto, visao central.
+# As duas viajam para o ALB no Modulo 6 sem mudar de estrutura (5.20).
+#
+# Antes de testar, o nome precisa resolver na SUA maquina (5.20, bloco 4):
+#   sudo sh -c 'printf "127.0.0.1\tcourier-management.algadelivery.test\n" >> /etc/hosts'
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: courier-management
+  labels:
+    app: courier-management
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: courier-management.algadelivery.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: courier-management
+                port:
+                  name: http        # casa com o `name: http` do Service (porta 80)

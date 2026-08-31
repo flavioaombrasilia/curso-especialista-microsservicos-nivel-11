@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: delivery-tracking
+  labels:
+    app: delivery-tracking
+spec:
+  type: ClusterIP           # e o padrao; poderia ser omitido
+  selector:
+    app: delivery-tracking          # o Service nao conhece Pods: conhece LABELS
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

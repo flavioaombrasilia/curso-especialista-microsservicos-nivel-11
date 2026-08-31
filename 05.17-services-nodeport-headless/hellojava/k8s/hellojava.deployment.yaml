@@ -1,0 +1,26 @@
+# Deployment de trabalho da aula: 3 replicas desde o inicio, porque o balanceamento
+# e o produto aqui — o campo "pod" da resposta HTTP e o que torna o balanceamento
+# visivel na tela em vez de apenas afirmado.
+# Imagem :v4 (a da 5.11, com /cache) — escuta sempre na 8080.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava
+  labels:
+    app: hellojava
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hellojava
+  template:
+    metadata:
+      labels:
+        app: hellojava      # e ESTA label que o selector do Service procura (5.07)
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v4
+        ports:
+          - name: http      # porta nomeada: permite `targetPort: http` no Service
+            containerPort: 8080

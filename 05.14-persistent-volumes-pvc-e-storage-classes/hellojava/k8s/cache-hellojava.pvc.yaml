@@ -1,0 +1,18 @@
+# Bloco 4 — provisionamento DINAMICO: o pedido sem PV nenhum do outro lado.
+# Ele nasce Pending de proposito: a StorageClass standard do Kind usa
+# WaitForFirstConsumer, ou seja, nao fabrica disco enquanto ninguem for usar —
+# o provisionador precisa saber em qual node o Pod vai rodar antes de criar o
+# volume. Na AWS e o mesmo motivo, so que a decisao e a AZ do volume EBS.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cache-hellojava
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  # storageClassName OMITIDO de proposito: usa a default (standard).
+  # Cuidado: omitir != storageClassName: "" (string vazia = "nao quero
+  # provisionamento dinamico, quero casar com um PV pre-existente sem classe").

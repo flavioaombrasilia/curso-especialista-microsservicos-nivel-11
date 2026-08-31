@@ -1,0 +1,25 @@
+# Bloco 2 — mostrar o Pending acontecendo de proposito: pede 16 CPUs de request,
+# mais do que qualquer node do cluster algadelivery tem. O scheduler recusa
+# (Insufficient cpu) por comparar com REQUESTS ja reservados, nao com CPU ociosa.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gigante
+  labels:
+    app: gigante
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gigante
+  template:
+    metadata:
+      labels:
+        app: gigante
+    spec:
+      containers:
+      - name: gigante
+        image: hellojava:v6
+        resources:
+          requests:
+            cpu: "16"

@@ -1,0 +1,13 @@
+# Bloco 3 — o PEDIDO. Repare que ele pede MENOS do que o PV oferece:
+# o requests.storage e um MINIMO, e o PVC recebe o PV inteiro (1Gi).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-manual
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual    # tem que bater com o do PV, senao nao ha casamento
+  resources:
+    requests:
+      storage: 500Mi
