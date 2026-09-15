@@ -1,0 +1,45 @@
+# "Erros para mostrar ao vivo" — os PVCs que ficam Pending.
+# O sintoma e sempre o mesmo e o diagnostico tambem: kubectl describe pvc <nome>
+# e ler os Events. Aplicar, mostrar o Pending, explicar e apagar.
+---
+# 1. Classe que nao existe (typo). Nenhum provisionador se candidata.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-classe-errada
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standart      # typo proposital
+  resources:
+    requests:
+      storage: 1Gi
+---
+# 2. O classico de producao: pedir ReadWriteMany de um fabricante que so faz RWO.
+# O pedido e legitimo; o fabricante e que nao faz esse produto. Na AWS, RWX e EFS,
+# nao EBS. No Kind, o local-path so faz RWO.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-rwx
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+---
+# 3. storageClassName: "" (string vazia) — "nao quero provisionamento dinamico,
+# quero um PV pre-existente SEM classe". Como nao existe nenhum, fica Pending.
+# Este e o bug dificil de enxergar: no olho, e igual a omitir o campo.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-sem-classe
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 1Gi

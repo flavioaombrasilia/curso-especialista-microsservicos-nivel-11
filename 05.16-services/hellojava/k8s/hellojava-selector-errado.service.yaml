@@ -1,0 +1,19 @@
+# "Erros para mostrar ao vivo" — o erro nº 1 com Service, e ele e SILENCIOSO.
+# O selector procura `app: hellojava-api`, label que nenhum Pod tem. O Service sobe
+# com ClusterIP bonitinho e nunca responde.
+# Diagnostico em um comando:
+#   kubectl get endpointslices -l kubernetes.io/service-name=hellojava-erro
+#   ENDPOINTS: <unset>   <- lista vazia = ninguem casou com o selector
+# Regra de ouro: Service que nao responde, olhe o EndpointSlice ANTES de tudo.
+#   lista vazia = problema de label/selector | lista cheia = problema de porta ou da app
+apiVersion: v1
+kind: Service
+metadata:
+  name: hellojava-erro
+spec:
+  selector:
+    app: hellojava-api      # errado de proposito
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

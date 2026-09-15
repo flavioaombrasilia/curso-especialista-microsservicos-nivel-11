@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: delivery-tracking-configmap
+  labels:
+    app: delivery-tracking
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-0.kafka:9092"
+  SERVER_PORT: "8080"
+  EUREKA_CLIENT_ENABLED: "false"
+
+  # ---------------------------------------------------------------------------
+  # NOVO NESTE DESAFIO (parte opcional — o "bonus" do bloco 6)
+  #
+  # Isto e o que faz o `POST /api/v1/deliveries` (o rascunho) voltar a funcionar,
+  # aquele que devolvia 502 na 5.21 "porque faltava uma dependencia externa".
+  #
+  # O problema NAO e de rede, e nem se resolve com YAML de Service. O cliente HTTP
+  # do delivery-tracking e um `RestClient` anotado com `@LoadBalanced` (Spring
+  # Cloud LoadBalancer), e para ele `http://courier-management` nao e um nome DNS:
+  # e um serviceId a ser procurado num REGISTRY. Com `EUREKA_CLIENT_ENABLED=false`
+  # nao existe registry, e o erro (medido no cluster) e:
+  #
+  #   java.lang.IllegalArgumentException: Service Instance cannot be null,
+  #   serviceId: courier-management
+  #
+  # ...e ele acontece mesmo com o Service `courier-management` de pe e com
+  # endpoints prontos. Foi verificado: criar o Service nao muda nada.
+  #
+  # A linha abaixo registra a instancia a mao no `SimpleDiscoveryClient` do
+  # spring-cloud-commons, apontando para o nome DNS do Service. Vai em JAVA_OPTS
+  # (e nao numa variavel `SPRING_...`) porque a chave do mapa tem hifen e indice
+  # `[0]`, e isso nao sobrevive a traducao de variavel de ambiente do Spring Boot.
+  #
+  # E um ATALHO DE LABORATORIO, nao a resposta arquitetural. Em Kubernetes o
+  # Service JA E o registry: a resposta certa e tirar o `@LoadBalanced` e chamar
+  # o nome DNS direto — mas isso e mudanca de codigo, e o assunto do Modulo 9.
+  #
+  # Aviso honesto: mesmo com isto no lugar, o rascunho falha de vez em quando por
+  # decisao da propria aplicacao — o `payout-calculation` do courier-management
+  # sorteia uma excecao em 50% das chamadas e dorme ate 400ms, contra um
+  # readTimeout de 200ms no cliente. E o cenario de resiliencia do Nivel 9, nao
+  # problema de cluster. Chame duas ou tres vezes.
+  # ---------------------------------------------------------------------------
+  JAVA_OPTS: >-
+    -XX:MaxRAMPercentage=75.0
+    -Dspring.cloud.discovery.client.simple.instances.courier-management[0].uri=http://courier-management:80

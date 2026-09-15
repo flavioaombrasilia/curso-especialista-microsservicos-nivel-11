@@ -1,0 +1,66 @@
+# StatefulSet puro: identidade, ordem e um disco por replica.
+#
+# Sem Service nesta aula, de proposito. Identidade, ordenacao e storage NAO dependem
+# de Service nenhum — os Pods ja nascem postgres-0 e postgres-1, cada um com o seu PVC.
+# O que falta e ENDERECAR esses individuos pelo nome (o DNS por Pod), e isso e a 5.17:
+# e la que entram o Service headless e o campo `serviceName` que amarra os dois.
+#
+# Nota de compatibilidade: `serviceName` e opcional neste cluster (Kind, v1.36).
+# Em clusters mais antigos o campo e obrigatorio — la, um Service headless teria que
+# vir junto desde ja.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  # Padrao do Kubernetes nos dois campos e Retain — o disco sobrevive ao desescalar
+  # e ao apagar o StatefulSet. Descomente para inverter (e perder o dado junto):
+  # persistentVolumeClaimRetentionPolicy:
+  #   whenScaled: Delete
+  #   whenDeleted: Delete
+  template:
+    metadata:
+      labels:
+        app: postgres       # tem que casar com o selector (5.07)
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: postgres
+        image: postgres:17.5
+        ports:
+          - containerPort: 5432
+            name: postgres
+        envFrom:
+          - secretRef:
+              name: postgres-cred      # as tres variaveis do Secret (5.13)
+        env:
+          # A imagem oficial roda initdb e EXIGE o diretorio vazio. Um volume de nuvem
+          # (EBS/EFS) chega com lost+found dentro e o container morre com
+          # "directory exists but is not empty". Apontar o PGDATA para um SUBdiretorio
+          # do ponto de montagem resolve. Detalhe da IMAGEM, nao do Kubernetes.
+          - name: PGDATA
+            value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+          - name: dados
+            mountPath: /var/lib/postgresql/data
+  # NAO e "volumes": e um MOLDE de PVC, e fica FORA do template do Pod.
+  # Cada replica ganha o SEU PVC, com nome previsivel:
+  #   <nome-do-template>-<nome-do-sts>-<ordinal>  ->  dados-postgres-0, dados-postgres-1
+  volumeClaimTemplates:
+    - metadata:
+        name: dados
+        labels:
+          app: postgres     # sem esta label, `kubectl delete pvc -l app=postgres` nao pega nada
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 1Gi

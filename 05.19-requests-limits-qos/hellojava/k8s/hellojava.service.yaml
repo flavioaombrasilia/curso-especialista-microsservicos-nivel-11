@@ -1,0 +1,17 @@
+# Bloco 2 — ClusterIP, o tipo padrao. Um endereco estavel que sobrevive as replicas.
+apiVersion: v1
+kind: Service
+metadata:
+  name: hellojava
+  labels:
+    app: hellojava
+spec:
+  type: ClusterIP           # e o padrao; poderia ser omitido
+  selector:
+    app: hellojava          # o Service nao conhece Pods: conhece LABELS
+  ports:
+    - name: http
+      port: 80              # a porta DO SERVICE (onde ele escuta)
+      targetPort: 8080      # a porta DO CONTAINER (para onde ele entrega)
+      # targetPort tambem aceita o NOME da porta do container: `targetPort: http`.
+      # E mais robusto — nao repete o numero em dois manifestos.

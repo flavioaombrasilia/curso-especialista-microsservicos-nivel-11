@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  labels:
+    app: kafka
+spec:
+  replicas: 1
+  serviceName: kafka          # amarra o StatefulSet ao Service headless `kafka`
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka            # tem que casar com o selector (5.07)
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        # A imagem apache/kafka roda como o usuario `appuser` (uid 1000). O diretorio
+        # entregue pelo PVC nasce de dono do root — sem o fsGroup, o broker morre no
+        # start com "Permission denied" ao criar os segmentos de log.
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: kafka
+          image: apache/kafka:3.8.1
+          ports:
+            - containerPort: 9092
+              name: broker
+            - containerPort: 9093
+              name: controller
+          envFrom:
+            - configMapRef:
+                name: kafka-config       # toda a config do broker
+          env:
+            - name: KAFKA_HEAP_OPTS
+              value: "-Xmx512m -Xms512m"
+          resources:
+            requests:
+              cpu: 200m
+              memory: 768Mi
+            limits:
+              memory: 1Gi
+          startupProbe:
+            tcpSocket:
+              port: broker
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            tcpSocket:
+              port: broker
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            tcpSocket:
+              port: broker
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: dados
+              mountPath: /var/lib/kafka/data
+  volumeClaimTemplates:
+    - metadata:
+        name: dados
+        labels:
+          app: kafka
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 2Gi

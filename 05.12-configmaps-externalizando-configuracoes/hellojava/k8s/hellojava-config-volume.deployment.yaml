@@ -1,0 +1,53 @@
+# Estado FINAL do bloco 3: as TRES formas de consumo no mesmo Pod.
+#   (a) envFrom          -> LOG_LEVEL abre/fecha o log de DEBUG da aplicacao
+#   (b) configMapKeyRef  -> APP_PORT chega como SERVER_PORT e muda a porta do servidor
+#   (c) volume + volumeMounts (o mecanismo da 5.11!) -> cada chave vira um ARQUIVO
+#       em /etc/app, e SPRING_CONFIG_ADDITIONAL_LOCATION faz o Spring CARREGAR o
+#       application.properties de la: o padrao do log passa a vir do ConfigMap.
+# O detalhe que decide design: env e SNAPSHOT do boot; o arquivo do volume o kubelet
+# ATUALIZA no container sem restart — mas quem le o arquivo e o Spring, e ele le no
+# start. Ou seja: o arquivo muda ao vivo, o comportamento so muda no rollout.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava-config
+  labels:
+    app: hellojava-config
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hellojava-config
+  template:
+    metadata:
+      labels:
+        app: hellojava-config
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v5
+        ports:
+          - containerPort: 8080
+        envFrom:
+          - configMapRef:
+              name: app-config
+        env:
+          - name: SERVER_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: APP_PORT
+          # sem isto o arquivo montado seria so um arquivo dentro do container:
+          # e esta env que manda o Spring carregar /etc/app/application.properties
+          - name: SPRING_CONFIG_ADDITIONAL_LOCATION
+            value: file:/etc/app/
+        volumeMounts:
+          - name: config
+            mountPath: /etc/app    # cada chave do ConfigMap = um arquivo aqui
+            readOnly: true         # config e para ler; a app nao escreve nela
+      volumes:
+        # volume declarado no nivel do POD (5.11), so que a fonte agora nao e um
+        # diretorio vazio: e um ConfigMap
+        - name: config
+          configMap:
+            name: app-config

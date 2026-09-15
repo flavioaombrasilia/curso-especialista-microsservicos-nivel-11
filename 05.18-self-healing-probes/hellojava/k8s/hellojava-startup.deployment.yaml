@@ -1,0 +1,48 @@
+# Bloco 5 — a saida certa para o boot lento: startupProbe. Enquanto ela nao
+# passar, liveness e readiness ficam suspensas; depois que passa, nunca mais roda.
+# Orcamento de boot = failureThreshold x periodSeconds = 30 x 5 = ate 150s.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava
+  labels:
+    app: hellojava
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hellojava
+  template:
+    metadata:
+      labels:
+        app: hellojava
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v5
+        ports:
+          - name: http
+            containerPort: 8080
+        env:
+          - name: APP_STARTUP_DELAY
+            value: "45"
+        startupProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 30      # 30 x 5s = ate 150s para subir
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 2
+          timeoutSeconds: 2
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          periodSeconds: 10
+          failureThreshold: 3
+          timeoutSeconds: 3

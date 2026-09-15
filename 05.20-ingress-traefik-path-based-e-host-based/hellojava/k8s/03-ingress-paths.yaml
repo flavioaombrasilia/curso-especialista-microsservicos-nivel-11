@@ -1,0 +1,47 @@
+# Bloco 4 — roteamento por CAMINHO (segundo eixo, depois do host): dois servicos atras de UM endereco.
+#
+# Zero anotacao: `rules`, `path`, `pathType` e `backend` sao todos campos padrao da
+# API do Kubernetes. Este manifesto roda igual em Traefik, Contour ou no ALB da AWS
+# — la muda o ingressClassName, nao a estrutura.
+#
+# `pathType` e OBRIGATORIO desde networking.k8s.io/v1.
+# `Prefix` casa por SEGMENTO de caminho:
+#   /hello        -> casa
+#   /hello/mundo  -> casa
+#   /hellozinho   -> NAO casa (404 do controller)
+#
+# Por que isso funciona sem reescrita de caminho: o prefixo da regra chega INTACTO
+# na aplicacao, e o hellojava:v7 responde em "/", "/hello" e "/rastreio". Se o app
+# so respondesse em "/", seria preciso cortar o prefixo antes de repassar — e isso
+# NAO e padrao da API: cada controller resolve do seu jeito. Fora do escopo da aula.
+#
+# A prova de qual backend atendeu esta no campo "pod" da resposta:
+#   curl -s http://api.algadelivery.test/hello      -> "pod":"hello-..."
+#   curl -s http://api.algadelivery.test/rastreio   -> "pod":"rastreio-..."
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: algadelivery
+spec:
+  ingressClassName: traefik
+  rules:
+    # UM host so, e cada servico num caminho — o contraste com o manifesto anterior,
+    # onde cada servico tinha o SEU host. Precisa da linha correspondente no
+    # /etc/hosts:  127.0.0.1  api.algadelivery.test
+    - host: api.algadelivery.test
+      http:
+        paths:
+          - path: /hello
+            pathType: Prefix
+            backend:
+              service:
+                name: hellojava
+                port:
+                  number: 80
+          - path: /rastreio
+            pathType: Prefix
+            backend:
+              service:
+                name: rastreio
+                port:
+                  number: 8080

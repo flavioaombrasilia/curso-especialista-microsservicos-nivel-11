@@ -1,0 +1,45 @@
+# Estado de repouso da aula (bloco 7): as tres probes com os MESMOS valores que
+# vao, sem alteracao de conceito, para o Deployment real do AlgaDelivery duas
+# aulas a frente. Imagem :v5 (a da 5.18, com Actuator e SaudeController).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava
+  labels:
+    app: hellojava
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hellojava
+  template:
+    metadata:
+      labels:
+        app: hellojava      # e ESTA label que o selector do Service procura (5.07)
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v5
+        ports:
+          - name: http      # porta nomeada: permite `targetPort: http` no Service
+            containerPort: 8080
+        startupProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 30        # ate 150s de boot — Spring Boot + JPA sobe nisso
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          periodSeconds: 10
+          failureThreshold: 3         # 30s de tolerancia depois de pronto
+          timeoutSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 2         # sai do rodizio em 10s
+          timeoutSeconds: 2

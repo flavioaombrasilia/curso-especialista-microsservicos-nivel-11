@@ -1,0 +1,61 @@
+# Bloco 4 — roteamento por HOST (primeiro eixo ensinado): um DNS por servico.
+# A decisao sai do cabecalho `Host` da requisicao HTTP, que na camada 4 (Service)
+# nem existe. Com `path: /` nao ha prefixo envolvido — e o caso sem pegadinha.
+#
+# PASSO 1 — aplicar este manifesto. O nome ainda NAO resolve:
+#   curl -s -m 5 http://hello.algadelivery.test/
+#   # curl: (6) Could not resolve host
+#   O Ingress esta certo; quem nao conhece o nome e a SUA MAQUINA.
+#
+# PASSO 2 — simular o DNS no menor lugar possivel, o /etc/hosts:
+#   sudo sh -c 'printf "\n127.0.0.1\thello.algadelivery.test\n127.0.0.1\trastreio.algadelivery.test\n" >> /etc/hosts'
+#   (Windows: C:\Windows\System32\drivers\etc\hosts, como administrador)
+#
+# PASSO 3 — agora funciona no navegador, porta 80, sem port-forward:
+#   curl -s http://hello.algadelivery.test/       # "pod":"hello-..."
+#   curl -s http://rastreio.algadelivery.test/    # "pod":"rastreio-..."
+#
+# PASSO 4 — o que o /etc/hosts fez e o que NAO fez. Ele resolveu NOME -> IP, e os
+# dois nomes viraram o MESMO 127.0.0.1. Quem escolheu o backend foi o cabecalho:
+#   curl -s -H 'Host: hello.algadelivery.test'    localhost/
+#   curl -s -H 'Host: rastreio.algadelivery.test' localhost/
+#
+# POR QUE .test E NAO .local: .test e reservado para testes pela RFC 6761. No macOS
+# o sufixo .local pertence ao mDNS/Bonjour, e a resolucao leva 5 a 10 SEGUNDOS ou
+# falha de forma intermitente, mesmo com a linha correta no /etc/hosts (medido).
+#
+# Alternativa sem editar arquivo do sistema: nip.io — trocar o host por
+# hello.127.0.0.1.nip.io, que resolve para 127.0.0.1 sozinho.
+#
+# `host` aceita curinga de UM nivel (*.algadelivery.test): api.algadelivery.test
+# casa, v1.api.algadelivery.test nao. E host e path combinam na mesma regra.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  # mesmo nome dos outros dois manifestos de propósito: cada `apply` SUBSTITUI o
+  # anterior, em vez de acumular Ingress no cluster. Sem isso, a regra catch-all
+  # do 01 (host `*`, path `/`) continuaria valendo e competindo com as de host.
+  name: algadelivery
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: hello.algadelivery.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hellojava
+                port:
+                  number: 80
+    - host: rastreio.algadelivery.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rastreio
+                port:
+                  number: 8080

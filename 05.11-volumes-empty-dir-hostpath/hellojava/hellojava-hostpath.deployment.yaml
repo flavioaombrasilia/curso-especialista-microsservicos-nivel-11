@@ -1,0 +1,38 @@
+# ATENCAO: hostPath monta um caminho do filesystem DO NODE dentro do Pod.
+# 3 replicas em 2 workers: o scheduler espalha 2 num node e 1 no outro, entao
+# as replicas vizinhas enxergam o MESMO arquivo e a de la enxerga nada — prova
+# de que o dado ficou no node, nao no Pod.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava-hostpath
+  labels:
+    app: hellojava-hostpath
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hellojava-hostpath
+  template:
+    metadata:
+      labels:
+        app: hellojava-hostpath
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v4
+        ports:
+          - containerPort: 8080
+        env:
+          - name: APP_CACHE_DIR
+            value: /dados/cache
+        volumeMounts:
+          - name: dados-do-node
+            mountPath: /dados
+      volumes:
+        - name: dados-do-node
+          hostPath:
+            path: /tmp/hellojava-cache
+            # sempre declarar o type: sem ele, caminho errado vira diretorio
+            # vazio criado silenciosamente no node
+            type: DirectoryOrCreate

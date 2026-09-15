@@ -1,0 +1,69 @@
+# Cluster do curso (Módulo 5+): 1 control-plane + 2 workers.
+# Node image fixado (não usar "latest"): kindest/node:v1.36.1, o node image
+# padrão do Kind v0.32.0 — confirmado em
+# https://github.com/kubernetes-sigs/kind/releases/tag/v0.32.0
+#
+# NOVO nesta aula (5.20), em cima do config da 5.17:
+#   1. os extraPortMappings passam de 30080->30080 para 30080->80 e 30443->443,
+#      porque agora quem atende na frente e o Ingress Controller, e Ingress se
+#      acessa na porta 80/443 — nao numa porta alta;
+#   2. o control-plane ganha o label ingress-ready=true, para prender o Pod do
+#      controller no unico node que tem mapeamento de porta (a porta 80 do host
+#      e uma so: dois nodes nao podem publica-la ao mesmo tempo).
+#
+# Por que containerPort 30080 e nao 80: a faixa de NodePort do Kubernetes e
+# 30000-32767. O Service do Traefik e NodePort fixo em 30080/30443, e o
+# extraPortMappings publica isso em 80/443 do host. Os dois numeros TEM que
+# casar — e o elo que mais quebra nesta aula.
+#
+# Uso: kind delete cluster --name algadelivery
+#      kind create cluster --name algadelivery --config kind-config.yaml
+#      kubectl get nodes --show-labels | grep ingress-ready
+#
+#      kind load docker-image hellojava:v7 --name algadelivery
+#
+#      kubectl create namespace traefik
+#      kubectl apply --server-side -f traefik/traefik-41.4.0.yaml
+#
+#      curl -i localhost    # 404 do controller = tem alguem escutando na porta 80
+#
+# SEM HELM nesta aula: traefik/traefik-41.4.0.yaml e o chart oficial JA RENDERIZADO
+# (helm template, valores em traefik/values.yaml). Helm e ensinado no Modulo 7 — usar
+# `helm install` aqui obrigaria a explicar a ferramenta fora de hora. O --server-side
+# e necessario porque o arquivo traz 25 CRDs, e os grandes estouram o limite de
+# tamanho da anotacao que o apply tradicional usa (metadata.annotations: Too long).
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+#
+# POR QUE O MAPEAMENTO VAI NUM WORKER, E NAO NO CONTROL-PLANE:
+# o Kind so remove o taint node-role.kubernetes.io/control-plane:NoSchedule
+# quando o cluster tem UM UNICO no. Como aqui tem 3, o control-plane continua
+# tainted, e o Pod do Traefik ficaria Pending com:
+#   0/3 nodes are available: 1 node(s) had untolerated taint(s),
+#   2 node(s) didn't match Pod's node affinity/selector.
+# Resolver isso com uma toleration exigiria ensinar taints/tolerations, que NAO
+# fazem parte da ementa. Colocar a porta e o label num worker (que nao tem taint)
+# resolve sem introduzir conceito novo.
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.36.1@sha256:3489c7674813ba5d8b1a9977baea8a6e553784dab7b84759d1014dbd78f7ebd5
+  - role: worker
+    image: kindest/node:v1.36.1@sha256:3489c7674813ba5d8b1a9977baea8a6e553784dab7b84759d1014dbd78f7ebd5
+    # rotula o node: e aqui que o Ingress Controller deve rodar.
+    # ATENCAO: em worker o patch e JoinConfiguration (no control-plane seria
+    # InitConfiguration) — trocar isso faz o kind create falhar.
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 30080      # NodePort do entrypoint `web` do Traefik
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 30443      # NodePort do entrypoint `websecure` do Traefik
+        hostPort: 443
+        protocol: TCP
+  - role: worker
+    image: kindest/node:v1.36.1@sha256:3489c7674813ba5d8b1a9977baea8a6e553784dab7b84759d1014dbd78f7ebd5

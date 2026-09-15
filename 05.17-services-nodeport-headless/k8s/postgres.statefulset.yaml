@@ -1,0 +1,58 @@
+# O MESMO StatefulSet da 5.15, agora com o campo que fica pendente naquela aula:
+# `serviceName: postgres`. E ele que declara "este StatefulSet e enderecado pelo
+# Service headless `postgres`" — o Service que este bloco cria logo em seguida.
+#
+# Nota de compatibilidade: `serviceName` e opcional neste cluster (Kind, v1.36).
+# Em clusters mais antigos o campo e obrigatorio — la, o Service headless teria que
+# vir junto desde a 5.15.
+#
+# replicas: 2 aqui (na 5.15 o manifesto final ficava em 1, pronto para virar o banco
+# do AlgaDelivery na 5.18) — a demo desta aula PRECISA de postgres-0 e postgres-1
+# vivos ao mesmo tempo para o DNS por Pod fazer sentido.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  replicas: 2
+  serviceName: postgres       # <- NOVO nesta aula: amarra o StatefulSet ao Service headless
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres       # tem que casar com o selector (5.07)
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: postgres
+        image: postgres:17.5
+        ports:
+          - containerPort: 5432
+            name: postgres
+        envFrom:
+          - secretRef:
+              name: postgres-cred      # as tres variaveis do Secret (5.13)
+        env:
+          # A imagem oficial roda initdb e EXIGE o diretorio vazio — detalhe da
+          # IMAGEM, nao do Kubernetes (ver 5.15 para o erro completo).
+          - name: PGDATA
+            value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+          - name: dados
+            mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: dados
+        labels:
+          app: postgres     # sem esta label, `kubectl delete pvc -l app=postgres` nao pega nada
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 1Gi

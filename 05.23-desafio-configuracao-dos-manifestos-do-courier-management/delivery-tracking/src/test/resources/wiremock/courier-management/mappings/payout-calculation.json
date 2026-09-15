@@ -1,0 +1,20 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/api/v1/couriers/payout-calculation",
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$.distanceInKm"
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "payoutFee": "50.00"
+    }
+  }
+}

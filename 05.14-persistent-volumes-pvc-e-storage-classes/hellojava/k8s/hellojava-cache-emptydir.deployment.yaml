@@ -1,0 +1,49 @@
+# Estado FINAL dos blocos 3 e 4: o mesmo Deployment, agora com um emptyDir
+# compartilhado entre os dois containers do Pod — e com 2 replicas, para provar
+# que cada Pod ganha o SEU volume.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava-cache
+  labels:
+    app: hellojava-cache
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hellojava-cache
+  template:
+    metadata:
+      labels:
+        app: hellojava-cache
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v4
+        ports:
+          - containerPort: 8080
+        env:
+          - name: APP_CACHE_DIR
+            value: /dados/cache
+        volumeMounts:
+          - name: dados          # o volume declarado la embaixo, no nivel do POD
+            mountPath: /dados    # onde ESTE container enxerga o volume
+      # container auxiliar: mesmo volume, outro caminho de montagem
+      - name: leitor
+        image: busybox:1.37
+        command: ["sh", "-c"]
+        args:
+          - |
+            while true; do
+              echo "[leitor] cache visto de /leitura/cache:"
+              ls -1 /leitura/cache 2>/dev/null || echo "[leitor] (ainda vazio)"
+              sleep 5
+            done
+        volumeMounts:
+          - name: dados
+            mountPath: /leitura
+      volumes:
+        # emptyDir declarado no TEMPLATE: cada replica nasce com o seu, vazio.
+        # Nasce quando o Pod e agendado, morre quando o Pod morre.
+        - name: dados
+          emptyDir: {}

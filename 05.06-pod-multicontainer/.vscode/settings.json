@@ -1,0 +1,9 @@
+{
+    // resources/requests/limits e QoS sao ensinados no Modulo 6 (6.06).
+    // Ate la, os manifestos das aulas nao declaram resources de proposito.
+    "vs-kubernetes": {
+        "disable-linters": [
+            "resource-limits"
+        ]
+    }
+}

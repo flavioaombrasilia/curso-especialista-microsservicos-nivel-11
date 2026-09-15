@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  # NOME PROPRIO por servico — mudou nesta aula.
+  # Ate a 5.22 este Ingress se chamava `algadelivery`, o mesmo nome usado pelos
+  # manifestos didaticos da 5.20 (onde reusar o nome era o objetivo: cada `apply`
+  # substituia o anterior). A partir do momento em que DOIS servicos precisam
+  # ficar publicados ao mesmo tempo, o nome compartilhado passa a ser um bug:
+  # aplicar um apaga a regra do outro, e o `kubectl apply` responde `configured`
+  # sem nenhum aviso.
+  name: delivery-tracking
+spec:
+  ingressClassName: traefik
+  rules:
+    # `algashop` era outro projeto: o host coerente com o modulo e `.algadelivery.test`
+    - host: delivery-tracking.algadelivery.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: delivery-tracking
+                port:
+                  name: http

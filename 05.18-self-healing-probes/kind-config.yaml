@@ -1,0 +1,25 @@
+# Cluster do curso (Módulo 5+): 1 control-plane + 2 workers.
+# Node image fixado (não usar "latest"): kindest/node:v1.36.1, o node image
+# padrão do Kind v0.32.0 — confirmado em
+# https://github.com/kubernetes-sigs/kind/releases/tag/v0.32.0
+#
+# NOVO nesta aula: extraPortMappings. Esse campo SO pode ser definido na criacao do
+# cluster — e o motivo de a gente estar recriando tudo agora. Sem ele, o curl do
+# laptop em localhost:30080 da "connection refused": os nodes do Kind vivem numa
+# rede Docker que o host nao alcanca direto. Limitacao do Kind, nao do Kubernetes.
+#
+# Uso: kind delete cluster --name algadelivery
+#      kind create cluster --name algadelivery --config kind-config.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.36.1@sha256:3489c7674813ba5d8b1a9977baea8a6e553784dab7b84759d1014dbd78f7ebd5
+    extraPortMappings:
+      - containerPort: 30080      # o NodePort desta aula
+        hostPort: 30080
+        protocol: TCP
+  - role: worker
+    image: kindest/node:v1.36.1@sha256:3489c7674813ba5d8b1a9977baea8a6e553784dab7b84759d1014dbd78f7ebd5
+  - role: worker
+    image: kindest/node:v1.36.1@sha256:3489c7674813ba5d8b1a9977baea8a6e553784dab7b84759d1014dbd78f7ebd5

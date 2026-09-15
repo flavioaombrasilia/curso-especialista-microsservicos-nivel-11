@@ -1,0 +1,44 @@
+# Bloco 5 — o desastre, de proposito: boot de 45s com a MESMA liveness do bloco
+# 4 (initialDelaySeconds: 20). A liveness estoura a tolerancia aos ~50s, antes da
+# app terminar de subir, o kubelet mata o container e o boot recomeca do zero —
+# CrashLoopBackOff eterno. E o bug numero um de Spring Boot em Kubernetes.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava
+  labels:
+    app: hellojava
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hellojava
+  template:
+    metadata:
+      labels:
+        app: hellojava
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v5
+        ports:
+          - name: http
+            containerPort: 8080
+        env:
+          - name: APP_STARTUP_DELAY
+            value: "45"
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 2
+          timeoutSeconds: 2
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          failureThreshold: 3
+          timeoutSeconds: 3

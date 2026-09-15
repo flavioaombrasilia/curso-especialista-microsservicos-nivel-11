@@ -1,0 +1,191 @@
+image: gradle:8.8-jdk21-alpine
+
+stages:
+- sonar_scan
+- prepare_version
+- test
+- build
+- build_image
+- security_scan
+- push_image
+- sign_image
+- verify_sign_image
+- semantic_release
+- sonar_sync
+
+variables:
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_VERIFY: 1
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_CERT_PATH: "/certs/client"
+  DOCKER_DRIVER: overlay2
+  DOCKER_ORGANIZATION: algaworks
+  DOCKER_REPOSITORY_NAME: delivery-tracking
+
+.rules-standard: &rules-standard
+  - if: $CI_COMMIT_BRANCH =~ /^(main|develop)$/ && $CI_PIPELINE_SOURCE == "push"
+    when: on_success
+
+sonar_scan:
+  stage: sonar_scan
+  services:
+  - name: docker:28-dind
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"
+    when: always
+  script: gradle sonar --info -Psonar.qualitygate.wait=true
+
+prepare_version:
+  image: algaworks/devops-semantic-release:v1.0.1
+  stage: prepare_version
+  rules: *rules-standard
+  script:
+  - echo "Preparando a versão do projeto..."
+  - semantic-release --dry-run --no-ci
+  - |
+    if [ ! -e .VERSION ]; then 
+      echo "canary" > .VERSION 
+    else 
+      echo "Arquivo .VERSION já existe."
+    fi
+
+  - echo "Declarando variaveis de ambiente..."
+  - echo "NEXT_VERSION=$(cat .VERSION)" >> build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+
+test_project:
+  stage: test
+  rules: *rules-standard
+  services:
+  - name: docker:28-dind
+  script:
+  - gradle test --info --stacktrace
+  artifacts:
+    reports:
+      junit: build/test-results/test/TEST-*.xml
+    paths:
+    - build/reports/tests/
+    - build/test-results/test/TEST-*.xml
+    - build/reports/problems/
+    expire_in: 1 hour
+    when: always
+
+build_project:
+  stage: build
+  rules: *rules-standard
+  script:
+  - gradle clean bootJar --info --stacktrace -Pversion=${NEXT_VERSION:-canary}
+  artifacts:
+    paths:
+    - build/libs/*.jar
+    expire_in: 30 minutes
+
+build_image:
+  stage: build_image
+  image: docker:28-cli
+  rules: *rules-standard
+  services:
+  - name: docker:28-dind
+  before_script:
+  - echo "Fazendo login no Docker Hub..."
+  - echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker info
+  - docker --version
+  script:
+  - echo "Construindo a imagem Docker..."
+  - docker build -t $DOCKER_ORGANIZATION/$DOCKER_REPOSITORY_NAME:${NEXT_VERSION:-canary} .
+  - echo "Salvando imagem em arquivo tar..."
+  - docker save $DOCKER_ORGANIZATION/$DOCKER_REPOSITORY_NAME:${NEXT_VERSION:-canary} -o image.tar
+  artifacts:
+    paths:
+    - image.tar
+    expire_in: 1 hour
+
+security_scan:
+  stage: security_scan
+  image: docker:28-cli
+  rules: *rules-standard
+  services:
+  - name: docker:28-dind
+  before_script:
+  - apk add --no-cache curl
+  - echo "Instalando Trivy para análise de vulnerabilidades..."
+  - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.68.2
+  script:
+  - echo "Carregando imagem Docker do arquivo tar para análise de segurança..."
+  - docker load -i image.tar
+  - echo "Gerando um relatório de vulnerabilidades JSON..."
+  - trivy image --exit-code 0 --no-progress --format json -o trivy-report.json $DOCKER_ORGANIZATION/$DOCKER_REPOSITORY_NAME:${NEXT_VERSION:-canary}
+  - echo "Iniciando a varredura de segurança com Trivy..."
+  - trivy image --exit-code 1 --no-progress --severity CRITICAL,HIGH $DOCKER_ORGANIZATION/$DOCKER_REPOSITORY_NAME:${NEXT_VERSION:-canary}
+  artifacts:
+    paths:
+    - trivy-report.json
+    expire_in: 3 days
+    when: always
+
+push_image:
+  stage: push_image
+  image: docker:28-cli
+  rules: *rules-standard
+  services:
+  - name: docker:28-dind
+  before_script:
+  - echo "Fazendo login no Docker Hub..."
+  - echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker info
+  - docker --version
+  script:
+  - echo "Carregando imagem Docker do arquivo tar..."
+  - docker load -i image.tar
+  - docker push $DOCKER_ORGANIZATION/$DOCKER_REPOSITORY_NAME:${NEXT_VERSION:-canary}
+  - echo "Imagem Docker enviada com sucesso!"
+
+sign_image:
+  stage: sign_image
+  rules: *rules-standard
+  variables:
+    COSIGN_YES: "true"
+  before_script:
+   - apk add --update cosign
+   - cosign version
+   - echo "$DOCKER_SECRET" | cosign login index.docker.io -u "$DOCKER_USERNAME" --password-stdin
+  script:
+    - echo "Preparando chave privada para assinatura..."
+    - echo "$COSIGN_PRIVATE_KEY" | base64 -d > cosign.key
+    - echo "Assinando a imagem Docker..."
+    - cosign sign --key cosign.key index.docker.io/$DOCKER_ORGANIZATION/$DOCKER_REPOSITORY_NAME:${NEXT_VERSION:-canary}
+
+verify_sign_image:
+  stage: verify_sign_image
+  rules: *rules-standard
+  variables:
+    COSIGN_YES: "true"
+  before_script:
+   - apk add --update cosign
+   - cosign version
+   - echo "$DOCKER_SECRET" | cosign login index.docker.io -u "$DOCKER_USERNAME" --password-stdin
+  script:
+    - echo "Preparando chave privada para assinatura..."
+    - echo "$COSIGN_PUBLIC_KEY" | base64 -d > cosign.pub
+    - echo "Assinando a imagem Docker..."
+    - cosign verify --key cosign.pub index.docker.io/$DOCKER_ORGANIZATION/$DOCKER_REPOSITORY_NAME:${NEXT_VERSION:-canary}
+
+semantic_release:
+  image: algaworks/devops-semantic-release:v1.0.1
+  stage: semantic_release
+  rules: *rules-standard
+  script:
+  - echo "Executando o Semantic Release..."
+  - semantic-release --no-ci
+
+sonar_sync:
+  stage: sonar_sync
+  services:
+  - name: docker:28-dind
+  rules:
+  - if: $CI_COMMIT_BRANCH == 'develop' && $CI_PIPELINE_SOURCE == "push"
+    when: on_success
+  script: gradle sonar --info -Psonar.qualitygate.wait=false

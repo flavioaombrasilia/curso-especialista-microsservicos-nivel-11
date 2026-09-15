@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  replicas: 2
+  serviceName: postgres       # <- NOVO nesta aula: amarra o StatefulSet ao Service headless
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres       # tem que casar com o selector (5.07)
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: postgres
+        image: postgres:17.5
+        ports:
+          - containerPort: 5432
+            name: postgres
+        envFrom:
+          - secretRef:
+              name: postgres-cred      # as tres variaveis do Secret (5.13)
+        env:
+          - name: PGDATA
+            value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+          - name: dados
+            mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: dados
+        labels:
+          app: postgres     # sem esta label, `kubectl delete pvc -l app=postgres` nao pega nada
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 1Gi

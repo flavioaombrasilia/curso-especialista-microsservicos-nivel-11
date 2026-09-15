@@ -1,0 +1,56 @@
+# Bloco 4 — o problema classico, plantado de proposito: heap maior que o limite
+# do container (-Xmx512m contra limits.memory: 256Mi). replicas: 1 para o
+# curl que trava e o describe do OOM mirarem sempre o mesmo Pod.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava
+  labels:
+    app: hellojava
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hellojava
+  template:
+    metadata:
+      labels:
+        app: hellojava
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v6
+        ports:
+          - name: http
+            containerPort: 8080
+        env:
+          # o problema classico, plantado de proposito: heap maior que o limite do container
+          - name: JAVA_TOOL_OPTIONS
+            value: "-Xmx512m"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "600Mi"
+            cpu: "500m"
+        startupProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          periodSeconds: 10
+          failureThreshold: 3
+          timeoutSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 2
+          timeoutSeconds: 2

@@ -1,0 +1,16 @@
+# Bloco 5, demo 2 — o PVC "novo e identico" que NAO adota o PV Released.
+# Depois de apagar o pvc-manual, o pv-manual fica Released (politica Retain) e
+# continua carregando o claimRef do dono antigo: esta reservado para alguem que
+# nao existe mais. Este PVC fica Pending para sempre, e isso e proposital —
+# liberar o PV e ato consciente de um operador.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-manual2
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual
+  resources:
+    requests:
+      storage: 500Mi

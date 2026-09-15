@@ -1,0 +1,20 @@
+# ClusterIP, como o da API da 5.21: quem publica para fora e o Ingress.
+apiVersion: v1
+kind: Service
+metadata:
+  name: courier-management     # <- o NOME importa mais aqui do que no delivery-tracking
+  labels:
+    app: courier-management
+spec:
+  type: ClusterIP
+  selector:
+    app: courier-management    # o Service nao conhece Pods: conhece LABELS (5.07/5.16)
+  ports:
+    - name: http
+      # DIFERENCA 4 — porta 80 na frente, 8081 atras.
+      # O `delivery-tracking` chama este servico em `http://courier-management`
+      # (o default de `courier-management.url` no codigo dele), e URL sem porta
+      # significa porta 80. O Service e quem faz a traducao 80 -> 8081, e e por
+      # isso que o nome do Service e a porta 80 nao sao escolha livre.
+      port: 80
+      targetPort: http

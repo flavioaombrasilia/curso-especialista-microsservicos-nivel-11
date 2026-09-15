@@ -1,0 +1,43 @@
+# Toda configuracao NAO sensivel do courier-management (5.12).
+#
+# Compare com o `delivery-tracking-configmap`: as chaves sao quase as mesmas, e as
+# diferencas sao exatamente o que este desafio te obriga a perceber.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: courier-management-configmap
+  labels:
+    app: courier-management
+data:
+  # MESMO broker do delivery-tracking. E de proposito: os dois servicos conversam
+  # pelo topico `deliveries.v1.events` — um publica, o outro consome (5.16: DNS de
+  # Service headless + identidade do Pod do StatefulSet).
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-0.kafka:9092"
+
+  # 8081, nao 8080. Esta e a primeira pegadinha do desafio: a porta aparece em
+  # QUATRO lugares (SERVER_PORT aqui, containerPort no Deployment, as tres probes,
+  # e o targetPort do Service). Errar um so deixa o Pod de pe e o trafego no chao.
+  SERVER_PORT: "8081"
+
+  # Sem registry de servico neste cluster. Se ficar habilitado, a aplicacao sobe
+  # mas enche o log de tentativas de registro no Eureka em `localhost:8761`.
+  EUREKA_CLIENT_ENABLED: "false"
+
+  # O grupo de consumo. Aqui ele e informativo: o `@KafkaListener` do codigo fixa
+  # `groupId = "courier-management"`, e a anotacao vence a propriedade.
+  KAFKA_CONSUMER_GROUP_ID: "courier-management"
+
+  # O actuator do courier expoe `health,info,metrics` por padrao; as probes so
+  # precisam de `health`. Reduzir a superficie exposta e boa pratica.
+  ACTUATOR_EXPOSED_ENDPOINTS: "health"
+  ACTUATOR_HEALTH_SHOW_DETAILS: "always"
+
+  # ATENCAO — o consumidor comeca do FIM do topico.
+  # `spring.kafka.consumer.auto-offset-reset` vale `latest` por padrao, entao um
+  # grupo novo IGNORA tudo que ja estava no topico. Consequencia pratica: os
+  # eventos publicados na 5.21 NAO vao ser processados quando este Pod subir.
+  # Para consumir o historico, descomente a linha abaixo e faca rollout restart:
+  # SPRING_KAFKA_CONSUMER_AUTO_OFFSET_RESET: "earliest"
+  # Antes de descomentar, cadastre um entregador (POST /api/v1/couriers) — sem
+  # nenhum entregador no banco o handler estoura `NoSuchElementException` em cada
+  # evento do backlog.

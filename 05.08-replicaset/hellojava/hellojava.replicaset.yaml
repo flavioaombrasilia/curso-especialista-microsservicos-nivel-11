@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: hellojava
+  labels:
+    app: hellojava
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hellojava
+  template:
+    metadata:
+      labels:
+        app: hellojava
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v1
+        ports:
+          - containerPort: 8080

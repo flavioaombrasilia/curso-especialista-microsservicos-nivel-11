@@ -1,0 +1,49 @@
+# Bloco 4 — a pegadinha do subPath.
+# Montar o DIRETORIO inteiro (k8s/hellojava-config-volume.deployment.yaml) substitui todo
+# o conteudo do mountPath pelas chaves do ConfigMap. Quando isso nao serve — porque o
+# diretorio de destino ja tem outros arquivos —, monta-se UMA chave via subPath.
+# O preco: volume montado com subPath NAO recebe as atualizacoes que o volume normal
+# receberia. Demo: editar o ConfigMap e comparar `cat /etc/app/application.properties`
+# nos dois Deployments — aqui o arquivo fica congelado, la ele muda.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava-config-subpath
+  labels:
+    app: hellojava-config-subpath
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hellojava-config-subpath
+  template:
+    metadata:
+      labels:
+        app: hellojava-config-subpath
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v5
+        ports:
+          - containerPort: 8080
+        envFrom:
+          - configMapRef:
+              name: app-config
+        env:
+          - name: SERVER_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: APP_PORT
+          - name: SPRING_CONFIG_ADDITIONAL_LOCATION
+            value: file:/etc/app/
+        volumeMounts:
+          - name: config
+            # o mountPath aponta para o ARQUIVO, nao para o diretorio
+            mountPath: /etc/app/additional.properties
+            subPath: additional.properties
+            readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: app-config

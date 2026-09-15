@@ -1,0 +1,46 @@
+# HPA do courier-management (5.22).
+#
+# `averageUtilization` e percentual SOBRE O REQUEST: 70% de `requests.cpu: 250m`
+# = 175m por Pod. Sem o bloco `resources` do Deployment nao existe denominador, e
+# o TARGETS fica `<unknown>/70%` para sempre.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: courier-management
+  labels:
+    app: courier-management
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: courier-management     # tem que bater EXATAMENTE com o nome do Deployment
+  minReplicas: 2                 # dois, nao um: failover e pre-requisito de disponibilidade (5.08)
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+# ---------------------------------------------------------------------------
+# UMA ASSIMETRIA QUE VALE ENTENDER (e o melhor achado deste desafio)
+#
+# Cada Pod deste Deployment faz DUAS coisas: atende HTTP e consome do Kafka.
+# O HPA escala o Pod inteiro — mas os dois papeis nao escalam igual:
+#
+#   - o lado HTTP escala LIVREMENTE: mais replicas = mais capacidade de request,
+#     porque o Service distribui entre todas (5.16);
+#   - o lado CONSUMIDOR tem teto no numero de PARTICOES do topico. O
+#     `deliveries.v1.events` tem 3 particoes (medido), e no Kafka uma particao e
+#     lida por, no maximo, UM consumidor do mesmo grupo. Com 2 replicas de pe, o
+#     grupo se divide assim (medido): um Pod com as particoes 0 e 1, o outro com
+#     a 2. Se o HPA subir para 6, tres Pods ficam com ZERO particao — atendendo
+#     HTTP normalmente, e sem consumir mensagem nenhuma.
+#
+# Ou seja: `maxReplicas: 6` esta certo para o trafego HTTP e e inutil para a
+# fila. Se o gargalo fosse a fila, a resposta nao seria HPA de CPU — seria
+# aumentar particoes e escalar por LAG do consumer group, que e exatamente o que
+# o KEDA faz (citado na 5.22 como fora do escopo).
+# ---------------------------------------------------------------------------

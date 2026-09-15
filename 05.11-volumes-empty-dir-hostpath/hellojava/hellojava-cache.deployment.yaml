@@ -1,0 +1,28 @@
+# Estado INICIAL da aula 5.11: a app ja grava em disco, mas nao ha volume nenhum.
+# O cache cai na camada gravavel do container — e morre no proximo restart.
+# O volume e digitado ao vivo (ver hellojava-cache-emptydir.deployment.yaml).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hellojava-cache
+  labels:
+    app: hellojava-cache
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hellojava-cache
+  template:
+    metadata:
+      labels:
+        app: hellojava-cache
+    spec:
+      containers:
+      - name: hellojava
+        image: hellojava:v4
+        ports:
+          - containerPort: 8080
+        env:
+          # o application.yaml resolve app.cache-dir a partir desta env
+          - name: APP_CACHE_DIR
+            value: /dados/cache
